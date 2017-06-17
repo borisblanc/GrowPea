@@ -33,6 +33,8 @@ namespace GrowPea.Droid
         private CameraSourcePreview mPreview;
         private GraphicOverlay mGraphicOverlay;
 
+        private static readonly int RC_HANDLE_GMS = 9001;
+
         public static string GreetingsText
         {
             get;
@@ -99,6 +101,58 @@ namespace GrowPea.Droid
                     .Build();
 
 
+        }
+
+        protected override void OnResume()
+        {
+            base.OnResume();
+            StartCameraSource();
+        }
+
+        protected override void OnPause()
+        {
+            base.OnPause();
+            mPreview.Stop();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (mCameraSource != null)
+            {
+                mCameraSource.Release();
+            }
+        }
+
+        /**
+   * Starts or restarts the camera source, if it exists.  If the camera source doesn't exist yet
+   * (e.g., because onResume was called before the camera source was created), this will be called
+   * again when the camera source is created.
+   */
+        private void StartCameraSource()
+        {
+
+            // check that the device has play services available.
+            int code = GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(this.ApplicationContext);
+            if (code != ConnectionResult.Success)
+            {
+                Dialog dlg = GoogleApiAvailability.Instance.GetErrorDialog(this, code, RC_HANDLE_GMS);
+                dlg.Show();
+            }
+
+            if (mCameraSource != null)
+            {
+                try
+                {
+                    mPreview.Start(mCameraSource, mGraphicOverlay);
+                }
+                catch (System.Exception e)
+                {
+                    Log.Error(TAG, "Unable to start camera source.", e);
+                    mCameraSource.Release();
+                    mCameraSource = null;
+                }
+            }
         }
 
         class GraphicFaceTracker : Tracker
