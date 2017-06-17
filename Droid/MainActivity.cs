@@ -32,6 +32,7 @@ namespace GrowPea.Droid
 			_textureView.SurfaceTextureListener = this;
 
 			SetContentView(_textureView);
+            //faart
   
         }
 
