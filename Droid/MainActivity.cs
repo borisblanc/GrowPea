@@ -22,8 +22,8 @@ using System.Threading.Tasks;
 
 namespace GrowPea.Droid
 {
-    [Activity(Label = "GrowPea", MainLauncher = true, Icon = "@mipmap/icon")]
-    public class MainActivity : Activity, IFactory
+    [Activity(Label = "GrowPea", MainLauncher = true, Icon = "@mipmap/icon", ScreenOrientation = ScreenOrientation.Landscape, Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen")]
+    public class MainActivity : Activity
     {
 
         private static readonly string TAG = "FaceTracker";
@@ -41,14 +41,17 @@ namespace GrowPea.Droid
             set;
         }
 
-        public Tracker Create(Java.Lang.Object item)
-        {
-            return new GraphicFaceTracker(mGraphicOverlay);
-        }
+        //public Tracker Create(Java.Lang.Object item)
+        //{
+        //    return new GraphicFaceTracker(mGraphicOverlay);
+        //}
 
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
+
+            this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
+            
 
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
@@ -56,7 +59,7 @@ namespace GrowPea.Droid
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
             //greetingsText = FindViewById<TextView>(Resource.Id.greetingsTextView);
-
+      
 
             //if (ActivityCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
             //{
@@ -74,11 +77,13 @@ namespace GrowPea.Droid
 
             var context = Application.Context;
             FaceDetector detector = new FaceDetector.Builder(context)
+                    .SetTrackingEnabled(true)
                     .SetClassificationType(ClassificationType.All)
+                    .SetProminentFaceOnly(true)
                     .Build();
 
             detector.SetProcessor(
-                    new MultiProcessor.Builder(this)
+                    new LargestFaceFocusingProcessor.Builder(detector, new GraphicFaceTracker(this.mGraphicOverlay))
                             .Build());
 
             if (!detector.IsOperational)
@@ -94,9 +99,10 @@ namespace GrowPea.Droid
                 Log.Warn(TAG, "Face detector dependencies are not yet available.");
             }
 
+
             mCameraSource = new CameraSource.Builder(context, detector)
                     .SetRequestedPreviewSize(640, 480)
-                    .SetFacing(CameraFacing.Back)
+                    .SetFacing(CameraFacing.Front)
                     .SetRequestedFps(30.0f)
                     .Build();
 

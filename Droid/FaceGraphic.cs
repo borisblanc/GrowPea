@@ -40,10 +40,11 @@ namespace GrowPea
 
         private volatile Face mFace;
         private int mFaceId;
-        private float mFaceHappiness;
+        private List<Face> happyfaces;
 
         public FaceGraphic(GraphicOverlay overlay) : base(overlay)
         {
+            happyfaces = new List<Face>();
             mCurrentColorIndex = (mCurrentColorIndex + 1) % COLOR_CHOICES.Length;
             var selectedColor = COLOR_CHOICES[mCurrentColorIndex];
 
@@ -95,10 +96,17 @@ namespace GrowPea
             //HACK: Demo only
             if (!string.IsNullOrEmpty(MainActivity.GreetingsText))
 
-                canvas.DrawText(MainActivity.GreetingsText, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
-            //canvas.DrawText("happiness: " + Math.Round(face.IsSmilingProbability, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
+
+            canvas.DrawText(MainActivity.GreetingsText, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
+            //canvas.DrawText("smile: " + Math.Round(face.IsSmilingProbability, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("right eye: " + Math.Round(face.IsRightEyeOpenProbability, 2).ToString(), x + ID_X_OFFSET * 2, y + ID_Y_OFFSET * 2, mIdPaint);
             //canvas.DrawText("left eye: " + Math.Round(face.IsLeftEyeOpenProbability, 2).ToString(), x - ID_X_OFFSET * 2, y - ID_Y_OFFSET * 2, mIdPaint);
+            if (face.IsSmilingProbability > .7 && face.IsRightEyeOpenProbability > .7 && face.IsLeftEyeOpenProbability > .7)
+            {
+                canvas.DrawText("HappyOpenEyes: " + Math.Round((face.IsSmilingProbability + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability)/3, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
+                happyfaces.Add(face);
+            }
+
 
             // Draws a bounding box around the face.
             float xOffset = ScaleX(face.Width / 2.0f);

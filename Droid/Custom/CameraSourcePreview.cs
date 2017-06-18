@@ -52,6 +52,7 @@ namespace GrowPea.Droid
 
         public CameraSourcePreview(Context context, IAttributeSet attrs) : base(context, attrs)
         {
+            
             mContext = context;
             mStartRequested = false;
             mSurfaceAvailable = false;
@@ -111,37 +112,37 @@ namespace GrowPea.Droid
                     var size = mCameraSource.PreviewSize;
                     var min = Math.Min(size.Width, size.Height);
                     var max = Math.Max(size.Width, size.Height);
-                    if (IsPortraitMode())
-                    {
-                        // Swap width and height sizes when in portrait, since it will be rotated by
-                        // 90 degrees
-                        mOverlay.SetCameraInfo(min, max, mCameraSource.CameraFacing);
-                    }
-                    else
-                    {
+                    //if (IsPortraitMode())
+                    //{
+                    //    // Swap width and height sizes when in portrait, since it will be rotated by
+                    //    // 90 degrees
+                    //    mOverlay.SetCameraInfo(min, max, mCameraSource.CameraFacing);
+                    //}
+                    //else
+                    //{
                         mOverlay.SetCameraInfo(max, min, mCameraSource.CameraFacing);
-                    }
+                    //}
                     mOverlay.Clear();
                 }
                 mStartRequested = false;
             }
         }
 
-        private bool IsPortraitMode()
-        {
-            var orientation = mContext.Resources.Configuration.Orientation;
-            if (orientation == Android.Content.Res.Orientation.Landscape)
-            {
-                return false;
-            }
-            if (orientation == Android.Content.Res.Orientation.Portrait)
-            {
-                return true;
-            }
+        //private bool IsPortraitMode()
+        //{
+        //    var orientation = mContext.Resources.Configuration.Orientation;
+        //    if (orientation == Android.Content.Res.Orientation.Landscape)
+        //    {
+        //        return false;
+        //    }
+        //    if (orientation == Android.Content.Res.Orientation.Portrait)
+        //    {
+        //        return true;
+        //    }
 
-            Log.Debug(TAG, "isPortraitMode returning false by default");
-            return false;
-        }
+        //    Log.Debug(TAG, "isPortraitMode returning false by default");
+        //    return false;
+        //}
 
 
 
@@ -185,12 +186,12 @@ namespace GrowPea.Droid
             }
 
             // Swap width and height sizes when in portrait, since it will be rotated 90 degrees
-            if (IsPortraitMode())
-            {
-                int tmp = width;
-                width = height;
-                height = tmp;
-            }
+            //if (IsPortraitMode())
+            //{
+            //    int tmp = width;
+            //    width = height;
+            //    height = tmp;
+            //}
 
             int layoutWidth = r - l;
             int layoutHeight = b - t;
