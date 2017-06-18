@@ -40,11 +40,11 @@ namespace GrowPea
 
         private volatile Face mFace;
         private int mFaceId;
-        private List<Face> happyfaces;
+        private SortedList<float, Face> savedfaces;
 
         public FaceGraphic(GraphicOverlay overlay) : base(overlay)
         {
-            happyfaces = new List<Face>();
+            savedfaces = new SortedList<float, Face>();
             mCurrentColorIndex = (mCurrentColorIndex + 1) % COLOR_CHOICES.Length;
             var selectedColor = COLOR_CHOICES[mCurrentColorIndex];
 
@@ -101,10 +101,13 @@ namespace GrowPea
             //canvas.DrawText("smile: " + Math.Round(face.IsSmilingProbability, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("right eye: " + Math.Round(face.IsRightEyeOpenProbability, 2).ToString(), x + ID_X_OFFSET * 2, y + ID_Y_OFFSET * 2, mIdPaint);
             //canvas.DrawText("left eye: " + Math.Round(face.IsLeftEyeOpenProbability, 2).ToString(), x - ID_X_OFFSET * 2, y - ID_Y_OFFSET * 2, mIdPaint);
-            if (face.IsSmilingProbability > .7 && face.IsRightEyeOpenProbability > .7 && face.IsLeftEyeOpenProbability > .7)
+            if (face.IsSmilingProbability >= .7 && face.IsRightEyeOpenProbability >= .5 && face.IsLeftEyeOpenProbability >= .5)
             {
-                canvas.DrawText("HappyOpenEyes: " + Math.Round((face.IsSmilingProbability + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability)/3, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
-                happyfaces.Add(face);
+                canvas.DrawText("!!!!!!HappyOpenEyes!!!!!! " + Math.Round(GetSetHappy(face),2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, new Paint() {Color = Color.Purple,TextSize = 60.0f});
+            }
+            else if (face.EulerY <= 18 && face.EulerY >= -18)
+            {
+                canvas.DrawText("FrontFace: " + Math.Round(GetSetHappy(face), 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
             }
 
 
@@ -117,5 +120,26 @@ namespace GrowPea
             float bottom = y + yOffset;
             canvas.DrawRect(left, top, right, bottom, mBoxPaint);
         }
+
+        private float GetSetHappy(Face face)
+        {
+            var happykey = ((face.IsSmilingProbability * 2)  + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability) / 3;
+            if (!savedfaces.ContainsKey(happykey) && happykey > 0 && savedfaces.Count < 2000)
+                savedfaces.Add(happykey, face);
+            return happykey;
+        }
+
+        public Face BestFace 
+        {
+            get {
+                if (savedfaces != null)
+                    return savedfaces[savedfaces.Keys.ToList().Last()];
+                else
+                    return new Face(0,null,0,0,0,0,null,0,0,0);
+            }
+
+        }
+
+
     }
 }
