@@ -181,6 +181,9 @@ namespace GrowPea.Droid
 		public partial class Id
 		{
 			
+			// aapt resource value: 0x7f08000c
+			public const int Record = 2131230732;
+			
 			// aapt resource value: 0x7f080000
 			public const int adjust_height = 2131230720;
 			

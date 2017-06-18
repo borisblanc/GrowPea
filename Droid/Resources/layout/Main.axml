@@ -2,16 +2,29 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/topLayout"
     android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:keepScreenOn="true">
     <GrowPea.Droid.CameraSourcePreview
         android:id="@+id/preview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight=".90">
         <GrowPea.Droid.GraphicOverlay
             android:id="@+id/faceOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_weight=".95"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent" />
     </GrowPea.Droid.CameraSourcePreview>
+    <LinearLayout
+        android:layout_height="0dp"
+        android:layout_width="fill_parent"
+        android:layout_weight=".10"
+        android:gravity="center">
+        <Button
+            android:text="Record"
+            android:layout_width="125dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/Record" />
+    </LinearLayout>
 </LinearLayout>

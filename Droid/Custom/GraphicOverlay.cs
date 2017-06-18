@@ -71,6 +71,7 @@ namespace GrowPea.Droid
 
         public GraphicOverlay(Context context, IAttributeSet attrs) : base(context, attrs)
         {
+            
 
         }
 
