@@ -69,6 +69,8 @@ namespace GrowPea.Droid
         public float HeightScaleFactor { get => mHeightScaleFactor; set => mHeightScaleFactor = value; }
         public CameraFacing CameraFacing { get => mFacing; set => mFacing = value; }
 
+        public bool isRecording = false;
+
         public GraphicOverlay(Context context, IAttributeSet attrs) : base(context, attrs)
         {
             
@@ -132,18 +134,21 @@ namespace GrowPea.Droid
 
         public override void Draw(Canvas canvas)
         {
-            base.Draw(canvas);
-            lock (mLock)
+            if (isRecording)
             {
-                if ((PreviewWidth != 0) && (PreviewHeight != 0))
+                base.Draw(canvas);
+                lock (mLock)
                 {
-                    WidthScaleFactor = (float)canvas.Width / (float)PreviewWidth;
-                    HeightScaleFactor = (float)canvas.Height / (float)PreviewHeight;
-                }
+                    if ((PreviewWidth != 0) && (PreviewHeight != 0))
+                    {
+                        WidthScaleFactor = (float)canvas.Width / (float)PreviewWidth;
+                        HeightScaleFactor = (float)canvas.Height / (float)PreviewHeight;
+                    }
 
-                foreach (Graphic graphic in mGraphics)
-                {
-                    graphic.Draw(canvas);
+                    foreach (Graphic graphic in mGraphics)
+                    {
+                        graphic.Draw(canvas);
+                    }
                 }
             }
         }

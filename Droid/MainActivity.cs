@@ -13,10 +13,12 @@ using Android.Gms.Vision.Faces;
 using Java.Lang;
 using System;
 using Android.Runtime;
-using static Android.Gms.Vision.MultiProcessor;
-using Android.Content.PM;
+using Android.Graphics;
+using Android.Content.Res;
 using Android.Gms.Common;
 using System.Threading.Tasks;
+using Android.Content.PM;
+using System.ComponentModel;
 
 
 
@@ -33,13 +35,20 @@ namespace GrowPea.Droid
         private CameraSourcePreview mPreview;
         private GraphicOverlay mGraphicOverlay;
 
+        private Button mRecbutton;
+
         private static readonly int RC_HANDLE_GMS = 9001;
 
-        public static string GreetingsText
-        {
-            get;
-            set;
-        }
+        private bool isRecording = false;
+        private CustomFaceDetector myFaceDetector;
+
+        //public static string GreetingsText
+        //{
+        //    get;
+        //    set;
+        //}
+
+
 
         //public Tracker Create(Java.Lang.Object item)
         //{
@@ -52,18 +61,23 @@ namespace GrowPea.Droid
 
             this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
             
-
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
+            mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
             //greetingsText = FindViewById<TextView>(Resource.Id.greetingsTextView);
-      
+
+
+
+            mRecbutton.Click += (sender, e) => SetRecording();
+
+
 
             //if (ActivityCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
             //{
-                CreateCameraSource();
+            CreateCameraSource();
                 //LiveCamHelper.Init();
                 //LiveCamHelper.GreetingsCallback = (s) => { RunOnUiThread(() => GreetingsText = s); };
                 //await LiveCamHelper.RegisterFaces();
@@ -71,6 +85,29 @@ namespace GrowPea.Droid
             //else { RequestCameraPermission(); }
 
         }
+
+
+        private void SetRecording()
+        {
+            if (!isRecording)
+            {
+                isRecording = true;
+                mGraphicOverlay.isRecording = true;
+                myFaceDetector.isRecording = true;
+                mRecbutton.Text = "STOP";
+                mRecbutton.SetTextColor(Color.Red);
+            }
+            else
+            {
+                isRecording = false;
+                mGraphicOverlay.isRecording = false;
+                myFaceDetector.isRecording = false;
+                mRecbutton.Text = "RECORD";
+                mRecbutton.SetTextColor(Color.Black);
+            }
+        }
+
+
 
         private void CreateCameraSource()
         {
@@ -82,8 +119,9 @@ namespace GrowPea.Droid
                     .SetProminentFaceOnly(true)
                     .Build();
 
-            var myFaceDetector = new CustomFaceDetector(detector);
+            myFaceDetector = new CustomFaceDetector(detector);
 
+            myFaceDetector.PropertyChanged += OnPropertyChanged;
 
             myFaceDetector.SetProcessor(
                     new LargestFaceFocusingProcessor.Builder(myFaceDetector, new GraphicFaceTracker(this.mGraphicOverlay))
@@ -109,6 +147,20 @@ namespace GrowPea.Droid
                     .SetRequestedFps(30.0f)
                     .Build();
 
+        }
+
+        private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "isRecording" && !myFaceDetector.isRecording)
+            {
+                isRecording = false;
+                mGraphicOverlay.isRecording = false;
+                this.RunOnUiThread(() => //can only do this on UI thread
+                {
+                    mRecbutton.Text = "RECORD";
+                    mRecbutton.SetTextColor(Color.Black);
+                });
+            }
         }
 
 
@@ -183,6 +235,7 @@ namespace GrowPea.Droid
 
             public override void OnUpdate(Detector.Detections detections, Java.Lang.Object item)
             {
+                 
                 var face = item as Face;
                 mOverlay.Add(mFaceGraphic);
                 mFaceGraphic.UpdateFace(face);

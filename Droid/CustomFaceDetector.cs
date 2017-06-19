@@ -11,18 +11,32 @@ using Android.Graphics;
 using Java.IO;
 using Java.Nio;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace GrowPea.Droid
 {
-    public class CustomFaceDetector: Detector
+    public class CustomFaceDetector: Detector, INotifyPropertyChanged
     {
         private FaceDetector _detector;
 
         private SortedList<float, BMFaces> _goodfaces;
-        private bool _sessiondone = false;
+
+        private bool _isRecording = false;
+
+        public bool isRecording
+        {
+            get { return _isRecording; }
+            set {
+                _isRecording = value;
+                PropertyChanged(this, new PropertyChangedEventArgs("isRecording"));
+            }
+        }
+            
 
         private Object thisLock1 = new Object();
         private Object thisLock = new Object();
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public CustomFaceDetector(FaceDetector detector) {
             _goodfaces = new SortedList<float, BMFaces>();
@@ -31,11 +45,14 @@ namespace GrowPea.Droid
 
         public override SparseArray Detect(Frame frame)
         {
-            var _framebuff = frame.GrayscaleImageData.Duplicate(); //must copy buffer right away before it gets overriden
+            ByteBuffer _framebuff = null;
+
+            if (isRecording)
+            _framebuff = frame.GrayscaleImageData.Duplicate(); //must copy buffer right away before it gets overriden VERY IMPORTANT
      
             var detected = _detector.Detect(frame);
 
-            if (!_sessiondone)
+            if (isRecording)
                 Task.Run(() => QualifyBitmap(detected, _framebuff, frame)); //fire and forget
 
             return detected;
@@ -67,11 +84,7 @@ namespace GrowPea.Droid
                             else //save top 3 to phone
                             {
 
-                                //foreach (KeyValuePair<float, BMFaces> kvp in _goodfaces)
-                                //{
-                                //    ExportBitmapAsPNG(kvp.Value.BM, kvp.Key);
-
-                                //}
+                                isRecording = false; //turn off recording this will notify parents to stop also
 
                                 lock (thisLock1)
                                 {
@@ -91,9 +104,7 @@ namespace GrowPea.Droid
                                     ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 2]);
                                 }
 
-
                                 _goodfaces.Clear();
-                                _sessiondone = true;
                             }
 
                         }

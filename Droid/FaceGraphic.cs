@@ -94,10 +94,10 @@ namespace GrowPea
             //canvas.DrawCircle(x, y, FACE_POSITION_RADIUS, mFacePositionPaint);
 
             //HACK: Demo only
-            if (!string.IsNullOrEmpty(MainActivity.GreetingsText))
+            //if (!string.IsNullOrEmpty(MainActivity.GreetingsText))
 
 
-            canvas.DrawText(MainActivity.GreetingsText, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
+            //canvas.DrawText(MainActivity.GreetingsText, x + ID_X_OFFSET, y + ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("smile: " + Math.Round(face.IsSmilingProbability, 2).ToString(), x - ID_X_OFFSET, y - ID_Y_OFFSET, mIdPaint);
             //canvas.DrawText("right eye: " + Math.Round(face.IsRightEyeOpenProbability, 2).ToString(), x + ID_X_OFFSET * 2, y + ID_Y_OFFSET * 2, mIdPaint);
             //canvas.DrawText("left eye: " + Math.Round(face.IsLeftEyeOpenProbability, 2).ToString(), x - ID_X_OFFSET * 2, y - ID_Y_OFFSET * 2, mIdPaint);
