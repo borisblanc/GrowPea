@@ -21,6 +21,7 @@ namespace GrowPea.Droid
         private SortedList<float, BMFaces> _goodfaces;
         private bool _sessiondone = false;
 
+        private Object thisLock1 = new Object();
         private Object thisLock = new Object();
 
         public CustomFaceDetector(FaceDetector detector) {
@@ -30,19 +31,17 @@ namespace GrowPea.Droid
 
         public override SparseArray Detect(Frame frame)
         {
-            var width = frame.GetMetadata().Width;
-            var height = frame.GetMetadata().Height;
             var _framebuff = frame.GrayscaleImageData.Duplicate(); //must copy buffer right away before it gets overriden
      
             var detected = _detector.Detect(frame);
 
             if (!_sessiondone)
-                Task.Run(() => QualifyBitmap(detected, _framebuff, width, height)); //fire and forget
+                Task.Run(() => QualifyBitmap(detected, _framebuff, frame)); //fire and forget
 
             return detected;
         }
 
-        private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff, int width, int height)
+        private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff, Frame frame)
         {
             if (detected.Size() > 0)
             {
@@ -61,8 +60,8 @@ namespace GrowPea.Droid
                             {
                                 if (!_goodfaces.ContainsKey(iUse)) //don't keep one with same score twice
                                 {
-                                    var bmap = GetBitmap(framebuff, width, height);
-                                    _goodfaces.Add(iUse, new BMFaces(bmap, face));
+                                    var bmap = GetBitmap(framebuff, frame);
+                                    _goodfaces.Add(iUse, new BMFaces(bmap, face, frame));
                                 }
                             }
                             else //save top 3 to phone
@@ -74,20 +73,23 @@ namespace GrowPea.Droid
 
                                 //}
 
-                                //last = best
-                                var lastkey = _goodfaces.Keys.ToList().Last();
-                                var lastix = _goodfaces.IndexOfKey(lastkey);
-                                Bitmap bm = _goodfaces.Values[lastix].BM;
-                                ExportBitmapAsPNG(bm, lastkey); 
-                                
-                                
-                                //second last/best
-                                bm = _goodfaces.Values[lastix -1].BM;
-                                ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]); 
+                                lock (thisLock1)
+                                {
+                                    //last = best
+                                    var lastkey = _goodfaces.Keys.ToList().Last();
+                                    var lastix = _goodfaces.IndexOfKey(lastkey);
+                                    Bitmap bm = _goodfaces.Values[lastix].BM;
+                                    ExportBitmapAsPNG(bm, lastkey);
 
-                                //third last/best
-                                bm = _goodfaces.Values[lastix - 2].BM;
-                                ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]); 
+
+                                    //second last/best
+                                    bm = _goodfaces.Values[lastix - 1].BM;
+                                    ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]);
+
+                                    //third last/best
+                                    bm = _goodfaces.Values[lastix - 2].BM;
+                                    ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 2]);
+                                }
 
 
                                 _goodfaces.Clear();
@@ -103,18 +105,18 @@ namespace GrowPea.Droid
 
 
 
-        private Bitmap GetBitmap(ByteBuffer framebuff, int width, int height)
+        private Bitmap GetBitmap(ByteBuffer framebuff, Frame frame)
         {
             Bitmap b;
 
             byte[] barray = new byte[framebuff.Remaining()];
             framebuff.Get(barray);
 
-            var yuvimage = new YuvImage(barray, ImageFormatType.Nv21, width, height, null);
+            var yuvimage = new YuvImage(barray, ImageFormatType.Nv21, frame.GetMetadata().Width, frame.GetMetadata().Height, null);
 
             using (var baos = new MemoryStream())
             {
-                yuvimage.CompressToJpeg(new Rect(0, 0, width, height), 100, baos); // Where 100 is the quality of the generated jpeg
+                yuvimage.CompressToJpeg(new Rect(0, 0, frame.GetMetadata().Width, frame.GetMetadata().Height), 100, baos); // Where 100 is the quality of the generated jpeg
                 byte[] jpegArray = baos.ToArray();
                 b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
             }
@@ -133,7 +135,7 @@ namespace GrowPea.Droid
             lock (thisLock)
             {
                 var sdCardPath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
-                var filePath = System.IO.Path.Combine(sdCardPath, string.Format("{0}test.jpeg", score.ToString().Replace(".", string.Empty)));
+                var filePath = System.IO.Path.Combine(sdCardPath, string.Format("{0}test.png", score.ToString().Replace(".", string.Empty)));
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     bitmap.Compress(Bitmap.CompressFormat.Png, 100, stream);
@@ -160,10 +162,13 @@ namespace GrowPea.Droid
 
         public Face F;
 
-        public BMFaces(Bitmap bitmap, Face face)
+        public Frame Fr;
+
+        public BMFaces(Bitmap bitmap, Face face, Frame frame)
         {
             BM = bitmap;
             F = face;
+            Fr = frame;
         }
     }
 }
