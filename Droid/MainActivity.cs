@@ -82,11 +82,14 @@ namespace GrowPea.Droid
                     .SetProminentFaceOnly(true)
                     .Build();
 
-            detector.SetProcessor(
-                    new LargestFaceFocusingProcessor.Builder(detector, new GraphicFaceTracker(this.mGraphicOverlay))
+            var myFaceDetector = new CustomFaceDetector(detector);
+
+
+            myFaceDetector.SetProcessor(
+                    new LargestFaceFocusingProcessor.Builder(myFaceDetector, new GraphicFaceTracker(this.mGraphicOverlay))
                             .Build());
 
-            if (!detector.IsOperational)
+            if (!myFaceDetector.IsOperational)
             {
                 // Note: The first time that an app using face API is installed on a device, GMS will
                 // download a native library to the device in order to do detection.  Usually this
@@ -100,14 +103,15 @@ namespace GrowPea.Droid
             }
 
 
-            mCameraSource = new CameraSource.Builder(context, detector)
+            mCameraSource = new CameraSource.Builder(context, myFaceDetector)
                     .SetRequestedPreviewSize(640, 480)
                     .SetFacing(CameraFacing.Front)
                     .SetRequestedFps(30.0f)
                     .Build();
 
-
         }
+
+
 
         protected override void OnResume()
         {

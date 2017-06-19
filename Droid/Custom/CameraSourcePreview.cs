@@ -128,6 +128,7 @@ namespace GrowPea.Droid
             }
         }
 
+
         //private bool IsPortraitMode()
         //{
         //    var orientation = mContext.Resources.Configuration.Orientation;
