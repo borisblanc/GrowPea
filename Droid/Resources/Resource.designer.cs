@@ -62,35 +62,35 @@ namespace GrowPea.Droid
 		public partial class Color
 		{
 			
-			// aapt resource value: 0x7f050008
-			public const int common_google_signin_btn_text_dark = 2131034120;
+			// aapt resource value: 0x7f070008
+			public const int common_google_signin_btn_text_dark = 2131165192;
 			
-			// aapt resource value: 0x7f050000
-			public const int common_google_signin_btn_text_dark_default = 2131034112;
+			// aapt resource value: 0x7f070000
+			public const int common_google_signin_btn_text_dark_default = 2131165184;
 			
-			// aapt resource value: 0x7f050001
-			public const int common_google_signin_btn_text_dark_disabled = 2131034113;
+			// aapt resource value: 0x7f070001
+			public const int common_google_signin_btn_text_dark_disabled = 2131165185;
 			
-			// aapt resource value: 0x7f050002
-			public const int common_google_signin_btn_text_dark_focused = 2131034114;
+			// aapt resource value: 0x7f070002
+			public const int common_google_signin_btn_text_dark_focused = 2131165186;
 			
-			// aapt resource value: 0x7f050003
-			public const int common_google_signin_btn_text_dark_pressed = 2131034115;
+			// aapt resource value: 0x7f070003
+			public const int common_google_signin_btn_text_dark_pressed = 2131165187;
 			
-			// aapt resource value: 0x7f050009
-			public const int common_google_signin_btn_text_light = 2131034121;
+			// aapt resource value: 0x7f070009
+			public const int common_google_signin_btn_text_light = 2131165193;
 			
-			// aapt resource value: 0x7f050004
-			public const int common_google_signin_btn_text_light_default = 2131034116;
+			// aapt resource value: 0x7f070004
+			public const int common_google_signin_btn_text_light_default = 2131165188;
 			
-			// aapt resource value: 0x7f050005
-			public const int common_google_signin_btn_text_light_disabled = 2131034117;
+			// aapt resource value: 0x7f070005
+			public const int common_google_signin_btn_text_light_disabled = 2131165189;
 			
-			// aapt resource value: 0x7f050006
-			public const int common_google_signin_btn_text_light_focused = 2131034118;
+			// aapt resource value: 0x7f070006
+			public const int common_google_signin_btn_text_light_focused = 2131165190;
 			
-			// aapt resource value: 0x7f050007
-			public const int common_google_signin_btn_text_light_pressed = 2131034119;
+			// aapt resource value: 0x7f070007
+			public const int common_google_signin_btn_text_light_pressed = 2131165191;
 			
 			static Color()
 			{
@@ -239,8 +239,8 @@ namespace GrowPea.Droid
 		public partial class Integer
 		{
 			
-			// aapt resource value: 0x7f070000
-			public const int google_play_services_version = 2131165184;
+			// aapt resource value: 0x7f050000
+			public const int google_play_services_version = 2131034112;
 			
 			static Integer()
 			{
@@ -293,56 +293,56 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f060012
 			public const int app_name = 2131099666;
 			
-			// aapt resource value: 0x7f060000
-			public const int common_google_play_services_enable_button = 2131099648;
-			
 			// aapt resource value: 0x7f060001
-			public const int common_google_play_services_enable_text = 2131099649;
+			public const int common_google_play_services_enable_button = 2131099649;
 			
 			// aapt resource value: 0x7f060002
-			public const int common_google_play_services_enable_title = 2131099650;
+			public const int common_google_play_services_enable_text = 2131099650;
 			
 			// aapt resource value: 0x7f060003
-			public const int common_google_play_services_install_button = 2131099651;
+			public const int common_google_play_services_enable_title = 2131099651;
 			
 			// aapt resource value: 0x7f060004
-			public const int common_google_play_services_install_text = 2131099652;
+			public const int common_google_play_services_install_button = 2131099652;
 			
 			// aapt resource value: 0x7f060005
-			public const int common_google_play_services_install_title = 2131099653;
+			public const int common_google_play_services_install_text = 2131099653;
 			
 			// aapt resource value: 0x7f060006
-			public const int common_google_play_services_notification_ticker = 2131099654;
-			
-			// aapt resource value: 0x7f060010
-			public const int common_google_play_services_unknown_issue = 2131099664;
+			public const int common_google_play_services_install_title = 2131099654;
 			
 			// aapt resource value: 0x7f060007
-			public const int common_google_play_services_unsupported_text = 2131099655;
+			public const int common_google_play_services_notification_ticker = 2131099655;
+			
+			// aapt resource value: 0x7f060000
+			public const int common_google_play_services_unknown_issue = 2131099648;
 			
 			// aapt resource value: 0x7f060008
-			public const int common_google_play_services_update_button = 2131099656;
+			public const int common_google_play_services_unsupported_text = 2131099656;
 			
 			// aapt resource value: 0x7f060009
-			public const int common_google_play_services_update_text = 2131099657;
+			public const int common_google_play_services_update_button = 2131099657;
 			
 			// aapt resource value: 0x7f06000a
-			public const int common_google_play_services_update_title = 2131099658;
+			public const int common_google_play_services_update_text = 2131099658;
 			
 			// aapt resource value: 0x7f06000b
-			public const int common_google_play_services_updating_text = 2131099659;
+			public const int common_google_play_services_update_title = 2131099659;
 			
 			// aapt resource value: 0x7f06000c
-			public const int common_google_play_services_wear_update_text = 2131099660;
+			public const int common_google_play_services_updating_text = 2131099660;
 			
 			// aapt resource value: 0x7f06000d
-			public const int common_open_on_phone = 2131099661;
+			public const int common_google_play_services_wear_update_text = 2131099661;
 			
 			// aapt resource value: 0x7f06000e
-			public const int common_signin_button_text = 2131099662;
+			public const int common_open_on_phone = 2131099662;
 			
 			// aapt resource value: 0x7f06000f
-			public const int common_signin_button_text_long = 2131099663;
+			public const int common_signin_button_text = 2131099663;
+			
+			// aapt resource value: 0x7f060010
+			public const int common_signin_button_text_long = 2131099664;
 			
 			// aapt resource value: 0x7f060011
 			public const int hello = 2131099665;
