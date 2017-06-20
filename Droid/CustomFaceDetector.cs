@@ -13,6 +13,8 @@ using Java.Nio;
 using System.Threading.Tasks;
 using System.ComponentModel;
 
+
+
 namespace GrowPea.Droid
 {
     public class CustomFaceDetector: Detector, INotifyPropertyChanged
@@ -31,7 +33,14 @@ namespace GrowPea.Droid
                 PropertyChanged(this, new PropertyChangedEventArgs("isRecording"));
             }
         }
-            
+
+
+
+
+        private bool IsFrameDimensionSet = false;
+        private int FrameWidth;
+        private int FrameHeight;
+
 
         private Object thisLock1 = new Object();
         private Object thisLock = new Object();
@@ -45,6 +54,7 @@ namespace GrowPea.Droid
 
         public override SparseArray Detect(Frame frame)
         {
+            VerifyFrameDimensions(frame);
             ByteBuffer _framebuff = null;
 
             if (isRecording)
@@ -53,12 +63,12 @@ namespace GrowPea.Droid
             var detected = _detector.Detect(frame);
 
             if (isRecording)
-                Task.Run(() => QualifyBitmap(detected, _framebuff, frame)); //fire and forget
+                Task.Run(() => QualifyBitmap(detected, _framebuff)); //fire and forget
 
             return detected;
         }
 
-        private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff, Frame frame)
+        private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff)
         {
             if (detected.Size() > 0)
             {
@@ -77,8 +87,8 @@ namespace GrowPea.Droid
                             {
                                 if (!_goodfaces.ContainsKey(iUse)) //don't keep one with same score twice
                                 {
-                                    var bmap = GetBitmap(framebuff, frame);
-                                    _goodfaces.Add(iUse, new BMFaces(bmap, face, frame));
+                                    var bmap = GetBitmap(framebuff);
+                                    _goodfaces.Add(iUse, new BMFaces(bmap, face));
                                 }
                             }
                             else //save top 3 to phone
@@ -114,20 +124,36 @@ namespace GrowPea.Droid
             }
         }
 
+        private void VerifyFrameDimensions(Frame frame)
+        {
+            if (!IsFrameDimensionSet)
+            {
+                FrameWidth = frame.GetMetadata().Width;
+                FrameHeight = frame.GetMetadata().Height;
+            }
+            else
+            {
+                if (FrameWidth != frame.GetMetadata().Width || FrameHeight != frame.GetMetadata().Height)
+                {
+                    throw new InvalidOperationException("Frame Dimensions can never change after processing starts"); //will always be landscape
+                }
 
+            }
 
-        private Bitmap GetBitmap(ByteBuffer framebuff, Frame frame)
+        }
+
+        private Bitmap GetBitmap(ByteBuffer framebuff)
         {
             Bitmap b;
 
             byte[] barray = new byte[framebuff.Remaining()];
             framebuff.Get(barray);
 
-            var yuvimage = new YuvImage(barray, ImageFormatType.Nv21, frame.GetMetadata().Width, frame.GetMetadata().Height, null);
+            var yuvimage = new YuvImage(barray, ImageFormatType.Nv21, FrameWidth, FrameHeight, null);
 
             using (var baos = new MemoryStream())
             {
-                yuvimage.CompressToJpeg(new Rect(0, 0, frame.GetMetadata().Width, frame.GetMetadata().Height), 100, baos); // Where 100 is the quality of the generated jpeg
+                yuvimage.CompressToJpeg(new Rect(0, 0, FrameWidth, FrameHeight), 100, baos); // Where 100 is the quality of the generated jpeg
                 byte[] jpegArray = baos.ToArray();
                 b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
             }
@@ -173,13 +199,10 @@ namespace GrowPea.Droid
 
         public Face F;
 
-        public Frame Fr;
-
-        public BMFaces(Bitmap bitmap, Face face, Frame frame)
+        public BMFaces(Bitmap bitmap, Face face)
         {
             BM = bitmap;
             F = face;
-            Fr = frame;
         }
     }
 }

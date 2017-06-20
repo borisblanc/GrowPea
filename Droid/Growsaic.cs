@@ -145,6 +145,7 @@ namespace GrowPea.Droid
                     .SetRequestedPreviewSize(640, 480)
                     .SetFacing(CameraFacing.Front)
                     .SetRequestedFps(30.0f)
+                    .SetAutoFocusEnabled(true)
                     .Build();
 
         }
