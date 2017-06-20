@@ -24,8 +24,8 @@ using System.ComponentModel;
 
 namespace GrowPea.Droid
 {
-    [Activity(Label = "GrowPea", MainLauncher = true, Icon = "@mipmap/icon", ScreenOrientation = ScreenOrientation.Landscape, Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen")]
-    public class MainActivity : Activity
+    [Activity(Label = "Growsaic", ScreenOrientation = ScreenOrientation.Landscape)]
+    public class Growsaic : Activity
     {
 
         private static readonly string TAG = "FaceTracker";
@@ -62,7 +62,7 @@ namespace GrowPea.Droid
             this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
             
             // Set our view from the "main" layout resource
-            SetContentView(Resource.Layout.Main);
+            SetContentView(Resource.Layout.Growsaic);
 
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);

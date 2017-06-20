@@ -17,7 +17,7 @@ namespace GrowPea
 {
     public class FaceGraphic : Graphic
     {
-        private static readonly float FACE_POSITION_RADIUS = 10.0f;
+        //private static readonly float FACE_POSITION_RADIUS = 10.0f;
         private static readonly float ID_TEXT_SIZE = 40.0f;
         private static readonly float ID_Y_OFFSET = 50.0f;
         private static readonly float ID_X_OFFSET = -50.0f;
