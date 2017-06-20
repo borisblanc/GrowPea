@@ -159,6 +159,9 @@ namespace GrowPea.Droid
                 {
                     mRecbutton.Text = "RECORD";
                     mRecbutton.SetTextColor(Color.Black);
+
+                    Toast toast = Toast.MakeText(this, "Smiles Captured :)!", ToastLength.Short);
+                    toast.Show();
                 });
             }
         }
