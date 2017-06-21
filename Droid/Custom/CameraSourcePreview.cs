@@ -41,7 +41,6 @@ namespace GrowPea.Droid
     {
         private static readonly String TAG = "CameraSourcePreview";
 
-        private Context mContext;
         private SurfaceView mSurfaceView;
         private bool mStartRequested;
         private bool mSurfaceAvailable;
@@ -52,8 +51,6 @@ namespace GrowPea.Droid
 
         public CameraSourcePreview(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            
-            mContext = context;
             mStartRequested = false;
             mSurfaceAvailable = false;
 
@@ -195,7 +192,7 @@ namespace GrowPea.Droid
             //}
 
             int layoutWidth = r - l;
-            int layoutHeight = b - t;
+            //int layoutHeight = b - t;
 
             // Computes height and width for potentially doing fit width.
             int childWidth = layoutWidth;

@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowPea.Droid", "Droid\Grow
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowPea.iOS", "iOS\GrowPea.iOS.csproj", "{93A02169-57D4-4331-BC92-C673699D8487}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpencvBinding", "..\Xamarin.Android-OpenCV4Android-master\Opencv4Android\OpencvBinding\OpencvBinding.csproj", "{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		GrowPea\GrowPea.projitems*{822c0783-b57d-4349-90cb-48cd840bf6e0}*SharedItemsImports = 13
@@ -48,6 +50,18 @@ Global
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhone.Build.0 = Release|iPhone
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|iPhone.Build.0 = Release|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{D51E9471-C935-4024-B30D-6E2DBA3CF9E2}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

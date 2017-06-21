@@ -80,6 +80,7 @@
     <Compile Include="CustomFaceDetector.cs" />
     <Compile Include="Custom\CameraSourcePreview.cs" />
     <Compile Include="Custom\GraphicOverlay.cs" />
+    <Compile Include="Encode.cs" />
     <Compile Include="FaceGraphic.cs" />
     <Compile Include="Growsaic.cs" />
     <Compile Include="MainMenu.cs" />
@@ -106,7 +107,12 @@
     <AndroidResource Include="Resources\mipmap-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\Icon.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\Xamarin.Android-OpenCV4Android-master\Opencv4Android\OpencvBinding\OpencvBinding.csproj">
+      <Project>{d51e9471-c935-4024-b30d-6e2dba3cf9e2}</Project>
+      <Name>OpencvBinding</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Cheese.png" />
   </ItemGroup>
