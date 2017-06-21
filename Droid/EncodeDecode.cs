@@ -79,13 +79,13 @@ namespace GrowPea.Droid
 
         public bool encodeDecodeVideoFromBufferToSurface(int width, int height, int bitRate)
         {
-            this.setParameters(width, height, bitRate);
-            return this.encodeDecodeVideoFromBuffer();
+            setParameters(width, height, bitRate);
+            return encodeDecodeVideoFromBuffer();
         }
 
         private void setParameters(int width, int height, int bitRate)
         {
-            if ((((width % 16) != 0) || ((height % 16) != 0)))
+            if ((width % 16 != 0) || (height % 16 != 0))
             {
                 System.Diagnostics.Debug.WriteLine("WARNING: width or height not multiple of 16");
             }
@@ -98,11 +98,11 @@ namespace GrowPea.Droid
 
         public bool encodeDecodeVideoFromBuffer()
         {
-            this.mLargestColorDelta = -1;
+            mLargestColorDelta = -1;
             bool result = true;
             try
             {
-                MediaCodecInfo codecInfo = EncodeDecode.selectCodec(MIME_TYPE);
+                MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
                 if ((codecInfo == null))
                 {
                     //  Don't fail CTS if they don't have an AVC codec  
@@ -118,7 +118,7 @@ namespace GrowPea.Droid
                 int colorFormat;
                 try
                 {
-                    colorFormat = EncodeDecode.selectColorFormat(codecInfo, MIME_TYPE);
+                    colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
                 }
                 catch (Exception)
                 {
@@ -131,13 +131,11 @@ namespace GrowPea.Droid
                     System.Diagnostics.Debug.WriteLine("found colorFormat: " + colorFormat);
                 }
 
-                //  We avoid the device-specific limitations on width and height by  
-                //  using values that  
-                //  are multiples of 16, which all tested devices seem to be able to  
-                //  handle.  
+                //  We avoid the device-specific limitations on width and height by using values that  
+                //  are multiples of 16, which all tested devices seem to be able to handle.  
                 MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, this.mWidth, this.mHeight);
-                //  Set some properties. Failing to specify some of these can cause  
-                //  the MediaCodec  
+
+                //  Set some properties. Failing to specify some of these can cause the MediaCodec  
                 //  configure() call to throw an unhelpful exception.  
                 format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
                 format.SetInteger(MediaFormat.KeyBitRate, this.mBitRate);
@@ -149,20 +147,17 @@ namespace GrowPea.Droid
                     System.Diagnostics.Debug.WriteLine("format: " + format);
                 }
 
-                //  Create a MediaCodec for the desired codec, then configure it as  
-                //  an encoder with  
-                //  our desired properties.  
-                this.mEncoder = MediaCodec.CreateByCodecName(codecInfo.Name);
-                this.mEncoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
-                this.mEncoder.Start();
+                //  Create a MediaCodec for the desired codec, then configure it as an encoder with our desired properties.  
+                mEncoder = MediaCodec.CreateByCodecName(codecInfo.Name);
+                mEncoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
+                mEncoder.Start();
+
                 //  Create a MediaCodec for the decoder, just based on the MIME type.  
-                //  The various  
-                //  format details will be passed through the csd-0 meta-data later  
-                //  on.  
+                //  The various format details will be passed through the csd-0 meta-data later on.  
                 String outputPath = this._outputFile.AbsolutePath;
                 try
                 {
-                    this.mMuxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
+                    mMuxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
                 }
                 catch (IOException ioe)
                 {
@@ -171,20 +166,20 @@ namespace GrowPea.Droid
                     ioe.PrintStackTrace();
                 }
 
-                result = this.doEncodeDecodeVideoFromBuffer(this.mEncoder, colorFormat);
+                result = doEncodeDecodeVideoFromBuffer(mEncoder, colorFormat);
             }
             finally
             {
-                if ((this.mEncoder != null))
+                if (this.mEncoder != null)
                 {
-                    this.mEncoder.Stop();
-                    this.mEncoder.Release();
+                    mEncoder.Stop();
+                    mEncoder.Release();
                 }
 
-                if ((this.mMuxer != null))
+                if (mMuxer != null)
                 {
-                    this.mMuxer.Stop();
-                    this.mMuxer.Release();
+                    mMuxer.Stop();
+                    mMuxer.Release();
                 }
 
                 if (VERBOSE)
@@ -229,7 +224,7 @@ namespace GrowPea.Droid
             for (int i = 0; (i < capabilities.ColorFormats.Count); i++)
             {
                 int colorFormat = capabilities.ColorFormats[i];
-                if (EncodeDecode.isRecognizedFormat(colorFormat))
+                if (isRecognizedFormat(colorFormat))
                 {
                     return colorFormat;
                 }
@@ -262,37 +257,32 @@ namespace GrowPea.Droid
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int generateIndex = 0;
             //  yuv format  
-            byte[] frameData = new byte[(this.mWidth
-                                         * (this.mHeight * (3 / 2)))];
+            byte[] frameData = new byte[this.mWidth * this.mHeight * (3 / 2)];
             //  Loop until the output side is done.  
             bool inputDone = false;
-            //  If we're not done submitting frames, generate a new one and submit  
-            //  it. By  
-            //  doing this on every loop we're working to ensure that the encoder  
-            //  always has  
-            //  work to do.  
+
+            //  If we're not done submitting frames, generate a new one and submit it. By  
+            //  doing this on every loop we're working to ensure that the encoder  always has work to do.  
             while (!inputDone)
             {
                 int inputBufIndex = encoder.DequeueInputBuffer(TIMEOUT_USEC);
                 if ((inputBufIndex >= 0))
                 {
-                    long ptsUsec = EncodeDecode.computePresentationTime(generateIndex);
+                    long ptsUsec = computePresentationTime(generateIndex);
                     if (generateIndex >= this._frames.Count)
                     {
-                        //  Send an empty frame with the end-of-stream flag set. If  
-                        //  we set EOS  
-                        //  on a frame with data, that frame data will be ignored,  
-                        //  and the  
-                        //  output will be short one frame.  
+                        //  Send an empty frame with the end-of-stream flag set. If  we set EOS  
+                        //  on a frame with data, that frame data will be ignored,  and the output will be short one frame.  
+
                         encoder.QueueInputBuffer(inputBufIndex, 0, 0, ptsUsec, MediaCodecBufferFlags.EndOfStream);
                         inputDone = true;
-                        this.drainEncoder(true, info);
+                        drainEncoder(true, info);
                     }
                     else
                     {
                         try
                         {
-                            this.generateFrame(generateIndex, frameData);
+                            generateFrame(generateIndex, frameData);
                         }
                         catch (Exception)
                         {
@@ -302,15 +292,16 @@ namespace GrowPea.Droid
 
                         if (VERBOSE)
                         {
-                            System.Diagnostics.Debug.WriteLine("generateIndex: " + (generateIndex + (", size: " + this._frames.Count)));
+                            System.Diagnostics.Debug.WriteLine("generateIndex: " + (generateIndex + (", size: " + _frames.Count)));
                         }
 
                         ByteBuffer inputBuf = encoderInputBuffers[inputBufIndex];
+
                         //  the buffer should be sized to hold one full frame  
                         inputBuf.Clear();
                         inputBuf.Put(frameData);
                         encoder.QueueInputBuffer(inputBufIndex, 0, frameData.Length, ptsUsec, 0);
-                        this.drainEncoder(false, info);
+                        drainEncoder(false, info);
                     }
 
                     generateIndex++;
@@ -337,7 +328,7 @@ namespace GrowPea.Droid
             {
                 try
                 {
-                    this.mEncoder.SignalEndOfInputStream();
+                    mEncoder.SignalEndOfInputStream();
                 }
                 catch 
                 {
@@ -346,10 +337,10 @@ namespace GrowPea.Droid
 
             }
 
-            ByteBuffer[] encoderOutputBuffers = this.mEncoder.GetOutputBuffers();
+            ByteBuffer[] encoderOutputBuffers = mEncoder.GetOutputBuffers();
             while (true)
             {
-                int encoderStatus = this.mEncoder.DequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+                int encoderStatus = mEncoder.DequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
                 if (encoderStatus == (int)MediaCodecInfoState.TryAgainLater)
                 {
                     //  no output available yet  
@@ -368,29 +359,31 @@ namespace GrowPea.Droid
                 else if (encoderStatus == (int)MediaCodecInfoState.OutputBuffersChanged)
                 {
                     //  not expected for an encoder  
-                    encoderOutputBuffers = this.mEncoder.GetOutputBuffers();
+                    encoderOutputBuffers = mEncoder.GetOutputBuffers();
                 }
                 else if (encoderStatus == (int)MediaCodecInfoState.OutputFormatChanged)
                 {
-                    //  should happen before receiving buffers, and should only  
-                    //  happen once  
-                    if (this.mMuxerStarted)
+                    //  should happen before receiving buffers, and should only happen once  
+                    if (mMuxerStarted)
                     {
                         throw new RuntimeException("format changed twice");
                     }
 
-                    MediaFormat newFormat = this.mEncoder.GetOutputFormat(0); //might need to fix this since it was not collection before my port!!!!!!!!!
+                    //BORIS MODIFIED!!might need to fix this since it was not collection before my port!!!!!!!!!
+                    MediaFormat newFormat = this.mEncoder.GetOutputFormat(0);
+                    //BORIS MODIFIED!!might need to fix this since it was not collection before my port!!!!!!!!!
+
                     if (VERBOSE)
                     {
                         System.Diagnostics.Debug.WriteLine("encoder output format changed: " + newFormat);
                     }
 
                     //  now that we have the Magic Goodies, start the muxer  
-                    this.mTrackIndex = this.mMuxer.AddTrack(newFormat);
-                    this.mMuxer.Start();
-                    this.mMuxerStarted = true;
+                    mTrackIndex = mMuxer.AddTrack(newFormat);
+                    mMuxer.Start();
+                    mMuxerStarted = true;
                 }
-                else if ((encoderStatus < 0))
+                else if (encoderStatus < 0)
                 {
                     if (VERBOSE)
                     {
@@ -403,14 +396,12 @@ namespace GrowPea.Droid
                     ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                     if ((encodedData == null))
                     {
-                        throw new RuntimeException(("encoderOutputBuffer "
-                                                    + (encoderStatus + " was null")));
+                        throw new RuntimeException("encoderOutputBuffer " + (encoderStatus + " was null"));
                     }
                     
                     if ((mBufferInfo.Flags & MediaCodecBufferFlags.CodecConfig) != 0)
                     {
-                        //  The codec config data was pulled out and fed to the muxer  
-                        //  when we got  
+                        //  The codec config data was pulled out and fed to the muxer when we got  
                         //  the INFO_OUTPUT_FORMAT_CHANGED status. Ignore it.  
                         if (VERBOSE)
                         {
@@ -422,7 +413,7 @@ namespace GrowPea.Droid
 
                     if (mBufferInfo.Size != 0)
                     {
-                        if (!this.mMuxerStarted)
+                        if (!mMuxerStarted)
                         {
                             throw new RuntimeException("muxer hasn\'t started");
                         }
@@ -437,7 +428,7 @@ namespace GrowPea.Droid
 
                         try
                         {
-                            this.mMuxer.WriteSampleData(this.mTrackIndex, encodedData, mBufferInfo);
+                            mMuxer.WriteSampleData(mTrackIndex, encodedData, mBufferInfo);
                         }
                         catch (Exception e)
                         {
@@ -446,7 +437,8 @@ namespace GrowPea.Droid
 
                     }
 
-                    this.mEncoder.ReleaseOutputBuffer(encoderStatus, false);
+                    mEncoder.ReleaseOutputBuffer(encoderStatus, false);
+
                     if ((mBufferInfo.Flags & MediaCodecBufferFlags.EndOfStream) != 0)
                     {
                         if (!endOfStream)
@@ -476,26 +468,28 @@ namespace GrowPea.Droid
         {
             //Set to zero.In YUV this is a dull green.
             Arrays.Fill(frameData, 0);
-            Mat mat = Highgui.Imread(this._frames[frameIndex].AbsolutePath);
+            Mat mat = Highgui.Imread(_frames[frameIndex].AbsolutePath);
             //       Mat dst = new Mat(mWidth, mHeight * 3 / 2, CvType.CV_8UC1);  
             Mat dst = new Mat();
             Imgproc.CvtColor(mat, dst, Imgproc.ColorRgba2yuvI420);
+
             //  use array instead of mat to improve the speed  
             dst.Get(0, 0, frameData);
+
             byte[] temp = frameData.ToArray();
-            int margin = (this.mHeight / 4);
+            int margin = this.mHeight / 4;
             int location = this.mHeight;
             int step = 0;
             for (int i = this.mHeight; (i < this.mHeight + margin); i++)
             {
                 for (int j = 0; (j < this.mWidth); j++)
                 {
-                    byte uValue = temp[((i * this.mWidth) + j)];
-                    byte vValue = temp[(((i + margin) * this.mWidth) + j)];
-                    frameData[((location * this.mWidth) + step)] = uValue;
-                    frameData[((location * this.mWidth) + (step + 1))] = vValue;
+                    byte uValue = temp[(i * this.mWidth) + j];
+                    byte vValue = temp[((i + margin) * this.mWidth) + j];
+                    frameData[(location * this.mWidth) + step] = uValue;
+                    frameData[(location * this.mWidth) + (step + 1)] = vValue;
                     step += 2;
-                    if ((step >= this.mWidth))
+                    if (step >= this.mWidth)
                     {
                         location++;
                         step = 0;
@@ -510,8 +504,7 @@ namespace GrowPea.Droid
         private static long computePresentationTime(int frameIndex)
         {
             long value = frameIndex;
-            return (132
-                    + (value * (1000000 / FRAME_RATE)));
+            return (132 + (value * (1000000 / FRAME_RATE)));
         }
     }
 }

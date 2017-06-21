@@ -124,6 +124,27 @@ namespace GrowPea.Droid
             }
         }
 
+        public String MakeBitmapVideo(List<Java.IO.File> images, String Savelocation, String name, int width, int height, int bitRate)
+        {
+            var directory = new Java.IO.File(Savelocation);
+            if (!directory.Exists())
+            {
+                directory.Mkdir();
+            }
+            var outputfile = new Java.IO.File(directory, name + ".mp4");
+
+            try
+            {
+                var encodeDecoder = new EncodeDecode(images, outputfile);
+                encodeDecoder.encodeDecodeVideoFromBufferToSurface(width, height, bitRate);
+            }
+            catch 
+            {
+                
+            }
+            return outputfile.AbsolutePath;
+        }
+
         private void VerifyFrameDimensions(Frame frame)
         {
             if (!IsFrameDimensionSet)
@@ -144,12 +165,9 @@ namespace GrowPea.Droid
 
         private Bitmap GetBitmap(ByteBuffer framebuff)
         {
+            var yuvimage = GetYUVImage(framebuff);
+
             Bitmap b;
-
-            byte[] barray = new byte[framebuff.Remaining()];
-            framebuff.Get(barray);
-
-            var yuvimage = new YuvImage(barray, ImageFormatType.Nv21, FrameWidth, FrameHeight, null);
 
             using (var baos = new MemoryStream())
             {
@@ -159,6 +177,14 @@ namespace GrowPea.Droid
             }
             
             return b;
+        }
+
+        private YuvImage GetYUVImage(ByteBuffer framebuff)
+        {
+            byte[] barray = new byte[framebuff.Remaining()];
+            framebuff.Get(barray);
+
+            return new YuvImage(barray, ImageFormatType.Nv21, FrameWidth, FrameHeight, null);
         }
 
         private float GetImageUsability(Face face)
