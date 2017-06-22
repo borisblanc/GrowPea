@@ -124,8 +124,11 @@ namespace GrowPea.Droid
             }
         }
 
-        public String MakeBitmapVideo(List<Java.IO.File> images, String Savelocation, String name, int width, int height, int bitRate)
+        public String MakeBitmapVideo(List<Bitmap> images, String Savelocation, String name, int width, int height, int bitRate)
         {
+
+            //setParameters(640, 480, 4000000);
+
             var directory = new Java.IO.File(Savelocation);
             if (!directory.Exists())
             {
@@ -135,8 +138,8 @@ namespace GrowPea.Droid
 
             try
             {
-                var encodeDecoder = new EncodeDecode(images, outputfile);
-                encodeDecoder.encodeDecodeVideoFromBufferToSurface(width, height, bitRate);
+                var encoder= new Encoder(width, height, bitRate, Savelocation);
+                encoder.EncodeAll(images);
             }
             catch 
             {
