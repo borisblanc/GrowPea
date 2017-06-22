@@ -82,6 +82,7 @@
     <Compile Include="Custom\GraphicOverlay.cs" />
     <Compile Include="Encoder.cs" />
     <Compile Include="FaceGraphic.cs" />
+    <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="Growsaic.cs" />
     <Compile Include="MainMenu.cs" />
     <Compile Include="Resources\Resource.designer.cs" />

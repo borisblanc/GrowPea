@@ -42,18 +42,6 @@ namespace GrowPea.Droid
         private bool isRecording = false;
         private CustomFaceDetector myFaceDetector;
 
-        //public static string GreetingsText
-        //{
-        //    get;
-        //    set;
-        //}
-
-
-
-        //public Tracker Create(Java.Lang.Object item)
-        //{
-        //    return new GraphicFaceTracker(mGraphicOverlay);
-        //}
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -67,23 +55,10 @@ namespace GrowPea.Droid
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
             mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
-            //greetingsText = FindViewById<TextView>(Resource.Id.greetingsTextView);
-
-
 
             mRecbutton.Click += (sender, e) => SetRecording();
 
-
-
-            //if (ActivityCompat.CheckSelfPermission(this, Manifest.Permission.Camera) == Permission.Granted)
-            //{
             CreateCameraSource();
-                //LiveCamHelper.Init();
-                //LiveCamHelper.GreetingsCallback = (s) => { RunOnUiThread(() => GreetingsText = s); };
-                //await LiveCamHelper.RegisterFaces();
-            //}
-            //else { RequestCameraPermission(); }
-
         }
 
 
@@ -104,6 +79,11 @@ namespace GrowPea.Droid
                 myFaceDetector.isRecording = false;
                 mRecbutton.Text = "RECORD";
                 mRecbutton.SetTextColor(Color.Black);
+
+                if (myFaceDetector._allFrameData != null && myFaceDetector._allFrameData.Count > 0)
+                {
+                    
+                }
             }
         }
 

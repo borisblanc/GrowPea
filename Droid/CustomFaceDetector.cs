@@ -17,197 +17,59 @@ using System.ComponentModel;
 
 namespace GrowPea.Droid
 {
-    public class CustomFaceDetector: Detector, INotifyPropertyChanged
+    public class CustomFaceDetector : Detector, INotifyPropertyChanged
     {
         private FaceDetector _detector;
 
-        private SortedList<float, BMFaces> _goodfaces;
+        public SortedList<float, FrameData> _allFrameData;
 
-        private bool _isRecording = false;
+        private bool _isRecording;
 
         public bool isRecording
         {
             get { return _isRecording; }
-            set {
+            set
+            {
                 _isRecording = value;
                 PropertyChanged(this, new PropertyChangedEventArgs("isRecording"));
             }
         }
 
-
-
-
-        private bool IsFrameDimensionSet = false;
-        private int FrameWidth;
-        private int FrameHeight;
-
-
-        private Object thisLock1 = new Object();
-        private Object thisLock = new Object();
-
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public CustomFaceDetector(FaceDetector detector) {
-            _goodfaces = new SortedList<float, BMFaces>();
+        public CustomFaceDetector(FaceDetector detector)
+        {
             _detector = detector;
         }
 
         public override SparseArray Detect(Frame frame)
         {
-            VerifyFrameDimensions(frame);
-            ByteBuffer _framebuff = null;
-
             if (isRecording)
-            _framebuff = frame.GrayscaleImageData.Duplicate(); //must copy buffer right away before it gets overriden VERY IMPORTANT
-     
-            var detected = _detector.Detect(frame);
-
-            if (isRecording)
-                Task.Run(() => QualifyBitmap(detected, _framebuff)); //fire and forget
-
-            return detected;
-        }
-
-        private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff)
-        {
-            if (detected.Size() > 0)
             {
-                
-                for (int i = 0, nsize = detected.Size(); i < nsize; i++)
-                {
-                    Object obj = detected.ValueAt(i);
-                    if (obj != null && obj.GetType() == typeof(Face))
-                    {
-                        var face = (Face)obj;
-                        var iUse = GetImageUsability(face);
+                //VerifyFrameDimensions(frame);
+                //long _frametimestamp = 0;
+                //ByteBuffer _framebuff = null;
 
-                        if (iUse > 0)
-                        {
-                            if (_goodfaces.Count < 100) //compile 100 best
-                            {
-                                if (!_goodfaces.ContainsKey(iUse)) //don't keep one with same score twice
-                                {
-                                    var bmap = GetBitmap(framebuff);
-                                    _goodfaces.Add(iUse, new BMFaces(bmap, face));
-                                }
-                            }
-                            else //save top 3 to phone
-                            {
+                var _framebuff =
+                    frame.GrayscaleImageData
+                        .Duplicate(); //must copy buffer right away before it gets overriden VERY IMPORTANT
+                var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
-                                isRecording = false; //turn off recording this will notify parents to stop also
+                var detected = _detector.Detect(frame);
 
-                                lock (thisLock1)
-                                {
-                                    //last = best
-                                    var lastkey = _goodfaces.Keys.ToList().Last();
-                                    var lastix = _goodfaces.IndexOfKey(lastkey);
-                                    Bitmap bm = _goodfaces.Values[lastix].BM;
-                                    ExportBitmapAsPNG(bm, lastkey);
+                GatherData(detected, _framebuff, _frametimestamp);
 
+                //QualifyBitmap(detected, _framebuff, _frametimestamp); //fire and forget
 
-                                    //second last/best
-                                    bm = _goodfaces.Values[lastix - 1].BM;
-                                    ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]);
-
-                                    //third last/best
-                                    bm = _goodfaces.Values[lastix - 2].BM;
-                                    ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 2]);
-                                }
-
-                                _goodfaces.Clear();
-                            }
-
-                        }
-                        
-                    }
-                }
-            }
-        }
-
-        public String MakeBitmapVideo(List<Bitmap> images, String Savelocation, String name, int width, int height, int bitRate)
-        {
-
-            //setParameters(640, 480, 4000000);
-
-            var directory = new Java.IO.File(Savelocation);
-            if (!directory.Exists())
-            {
-                directory.Mkdir();
-            }
-            var outputfile = new Java.IO.File(directory, name + ".mp4");
-
-            try
-            {
-                var encoder= new Encoder(width, height, bitRate, Savelocation);
-                encoder.EncodeAll(images);
-            }
-            catch 
-            {
-                
-            }
-            return outputfile.AbsolutePath;
-        }
-
-        private void VerifyFrameDimensions(Frame frame)
-        {
-            if (!IsFrameDimensionSet)
-            {
-                FrameWidth = frame.GetMetadata().Width;
-                FrameHeight = frame.GetMetadata().Height;
+                //framecount++;
+                return detected;
             }
             else
             {
-                if (FrameWidth != frame.GetMetadata().Width || FrameHeight != frame.GetMetadata().Height)
-                {
-                    throw new InvalidOperationException("Frame Dimensions can never change after processing starts"); //will always be landscape
-                }
-
-            }
-
-        }
-
-        private Bitmap GetBitmap(ByteBuffer framebuff)
-        {
-            var yuvimage = GetYUVImage(framebuff);
-
-            Bitmap b;
-
-            using (var baos = new MemoryStream())
-            {
-                yuvimage.CompressToJpeg(new Rect(0, 0, FrameWidth, FrameHeight), 100, baos); // Where 100 is the quality of the generated jpeg
-                byte[] jpegArray = baos.ToArray();
-                b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
-            }
-            
-            return b;
-        }
-
-        private YuvImage GetYUVImage(ByteBuffer framebuff)
-        {
-            byte[] barray = new byte[framebuff.Remaining()];
-            framebuff.Get(barray);
-
-            return new YuvImage(barray, ImageFormatType.Nv21, FrameWidth, FrameHeight, null);
-        }
-
-        private float GetImageUsability(Face face)
-        {
-            return ((face.IsSmilingProbability * 2) + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability) / 3;
-        }
-
-
-        private void ExportBitmapAsPNG(Bitmap bitmap, float score)
-        {
-            lock (thisLock)
-            {
-                var sdCardPath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
-                var filePath = System.IO.Path.Combine(sdCardPath, string.Format("{0}test.png", score.ToString().Replace(".", string.Empty)));
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    bitmap.Compress(Bitmap.CompressFormat.Png, 100, stream);
-                }
+                return _detector.Detect(frame);
             }
         }
+
 
         public bool isOperational()
         {
@@ -220,18 +82,30 @@ namespace GrowPea.Droid
         }
 
 
+        private void GatherData(SparseArray detected, ByteBuffer framebuff, float timestamp)
+        {
+            if (_allFrameData == null)
+                _allFrameData = new SortedList<float, FrameData>();
+
+            _allFrameData.Add(timestamp, new FrameData(timestamp, framebuff, detected));
+        }
     }
 
-    public class BMFaces
+
+
+    public class FrameData
     {
-        public Bitmap BM;
+        public ByteBuffer _bytebuff;
 
-        public Face F;
+        public SparseArray _sparsearray;
 
-        public BMFaces(Bitmap bitmap, Face face)
+        public float _timestamp;
+
+        public FrameData(float timestamp, ByteBuffer bytebuff, SparseArray sparsearray)
         {
-            BM = bitmap;
-            F = face;
+            _timestamp = timestamp;
+            _bytebuff = bytebuff;
+            _sparsearray = sparsearray;
         }
     }
 }
