@@ -40,6 +40,8 @@ namespace GrowPea.Droid
         private readonly int _frameWidth;
         private readonly int _frameHeight;
 
+        private static readonly Object obj = new Object();
+
         public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight)
         {
             _allFrameData = allframedata;
@@ -72,17 +74,26 @@ namespace GrowPea.Droid
                         if (face != null)
                         {
                             var iUse = GetImageUsability(face);
-                            var bmap = GetBitmap(FD._bytebuff);
-                            ALLFaces.Add(new BmFace(FD._timestamp, bmap, iUse));
+                            lock (obj)
+                            {
+                                var bmap = GetBitmap(FD._bytebuff);
+                                ALLFaces.Add(new BmFace(FD._timestamp, bmap, iUse));
+                            }
                         }
 
                     }
 
                     if (ALLFaces.Count > 0)
                     {
+                        var frameoffsetMinusStart = 10; //start offset
+                        var frameboundPlusEnd = 30; //count of frames
+               
+
                         var maxIuse = ALLFaces.Max(x => x.Iuse);
-                        int bestfaceIndex = ALLFaces.FindIndex(f => f.Iuse == maxIuse);
-                        bestfaceframes = ALLFaces.GetRange(bestfaceIndex - 10, 30); //range around bestface of 30 frames
+                        var bestfaceIndex = ALLFaces.Select((Value, Index) => new { Value, Index })
+                            .Where(f => f.Index >= frameoffsetMinusStart && f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart))
+                            .First(f => f.Value.Iuse == maxIuse); //offsets take into account array size so best face is within bounds
+                        bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
                     }
                 }
             }
@@ -92,11 +103,16 @@ namespace GrowPea.Droid
             }
 
 
+            for(int i = 0; i < bestfaceframes.Count; i++)
+            {
+                ExportBitmapAsPNG(bestfaceframes[i].BM, i); 
+            }
+
             if (bestfaceframes.Count > 0)
                 return true;
             else
                 return false;
-
+            
         }
 
         private Face GetSparseFace(SparseArray array)
@@ -194,9 +210,11 @@ namespace GrowPea.Droid
                 var yuvimage = GetYUVImage(framebuff);
                 using (var baos = new MemoryStream())
                 {
-                    yuvimage.CompressToJpeg(new Rect(0, 0, _frameWidth, _frameHeight), 60, baos); // Where 100 is the quality of the generated jpeg
+                    yuvimage.CompressToJpeg(new Rect(0, 0, _frameWidth, _frameHeight), 100, baos); // Where 90 is the quality of the generated jpeg
                     byte[] jpegArray = baos.ToArray();
-                    b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
+                    var bitmapoptions = new BitmapFactory.Options {InSampleSize = 2};
+                    b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length, bitmapoptions);
+                    //b = Resize(bitmap, 640, 480);
                 }
             }
             catch (Exception e)
@@ -207,6 +225,34 @@ namespace GrowPea.Droid
 
             return b;
         }
+
+        //private static Bitmap Resize(Bitmap image, int maxWidth, int maxHeight)
+        //{
+        //    if (maxHeight > 0 && maxWidth > 0)
+        //    {
+        //        int width = image.Width;
+        //        int height = image.Height;
+        //        float ratioBitmap = (float)width / (float)height;
+        //        float ratioMax = (float)maxWidth / (float)maxHeight;
+
+        //        int finalWidth = maxWidth;
+        //        int finalHeight = maxHeight;
+        //        if (ratioMax > 1)
+        //        {
+        //            finalWidth = (int)((float)maxHeight * ratioBitmap);
+        //        }
+        //        else
+        //        {
+        //            finalHeight = (int)((float)maxWidth / ratioBitmap);
+        //        }
+        //        image = Bitmap.CreateScaledBitmap(image, finalWidth, finalHeight, true);
+        //        return image;
+        //    }
+        //    else
+        //    {
+        //        return image;
+        //    }
+        //}
 
         private YuvImage GetYUVImage(ByteBuffer framebuff)
         {
@@ -224,11 +270,14 @@ namespace GrowPea.Droid
 
         private void ExportBitmapAsPNG(Bitmap bitmap, float score)
         {
-            var sdCardPath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
-            var filePath = System.IO.Path.Combine(sdCardPath, string.Format("{0}test.png", score.ToString().Replace(".", string.Empty)));
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            lock (obj)
             {
-                bitmap.Compress(Bitmap.CompressFormat.Png, 100, stream);
+                var sdCardPath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
+                var filePath = System.IO.Path.Combine(sdCardPath, string.Format("{0}test.png", score.ToString().Replace(".", string.Empty)));
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    bitmap.Compress(Bitmap.CompressFormat.Png, 100, stream);
+                }
             }
         }
 
