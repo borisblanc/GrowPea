@@ -28,7 +28,7 @@ namespace GrowPea.Droid
     public class Growsaic : Activity
     {
 
-        private static readonly string TAG = "FaceTracker";
+        private static readonly string TAG = "Growsaic";
 
         private CameraSource mCameraSource = null;
 
@@ -41,6 +41,11 @@ namespace GrowPea.Droid
 
         private bool isRecording = false;
         private CustomFaceDetector myFaceDetector;
+
+        private int pFramewidth = 640;
+        private int pFrameHeight = 480;
+
+        private Single Fps = 30.0f;
 
 
         protected override void OnCreate(Bundle bundle)
@@ -80,9 +85,9 @@ namespace GrowPea.Droid
                 mRecbutton.Text = "RECORD";
                 mRecbutton.SetTextColor(Color.Black);
 
-                if (myFaceDetector._allFrameData != null && myFaceDetector._allFrameData.Count > 0)
+                if (myFaceDetector._allFrameData.Count > 0)
                 {
-                    
+                    StartFrameProcessing();
                 }
             }
         }
@@ -109,11 +114,6 @@ namespace GrowPea.Droid
 
             if (!myFaceDetector.IsOperational)
             {
-                // Note: The first time that an app using face API is installed on a device, GMS will
-                // download a native library to the device in order to do detection.  Usually this
-                // completes before the app is run for the first time.  But if that download has not yet
-                // completed, then the above call will not detect any faces.
-                //
                 // isOperational() can be used to check if the required native library is currently
                 // available.  The detector will automatically become operational once the library
                 // download completes on device.
@@ -122,9 +122,9 @@ namespace GrowPea.Droid
 
 
             mCameraSource = new CameraSource.Builder(context, myFaceDetector)
-                    .SetRequestedPreviewSize(640, 480)
+                    .SetRequestedPreviewSize(pFramewidth, pFrameHeight)
                     .SetFacing(CameraFacing.Front)
-                    .SetRequestedFps(30.0f)
+                    .SetRequestedFps(Fps)
                     .SetAutoFocusEnabled(true)
                     .Build();
 
@@ -142,6 +142,40 @@ namespace GrowPea.Droid
                     mRecbutton.SetTextColor(Color.Black);
 
                     Toast toast = Toast.MakeText(this, "Smiles Captured :)!", ToastLength.Short);
+                    toast.Show();
+                });
+
+                //if (myFaceDetector._allFrameData.Count > 0)
+                //{
+                //    StartFrameProcessing();
+                //}
+            }
+        }
+
+        private async void StartFrameProcessing()
+        {
+            this.RunOnUiThread(() => //can only do this on UI thread
+            {
+                Toast toast = Toast.MakeText(this, "Processing Smiles :)!", ToastLength.Short);
+                toast.Show();
+            });
+
+            FrameDataProcessor fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight);
+            bool result = await fdp.BeginProcessingFrames();
+
+            if (result)
+            {
+                this.RunOnUiThread(() => //can only do this on UI thread
+                {
+                    Toast toast = Toast.MakeText(this, "Smiles Processed:)!", ToastLength.Short);
+                    toast.Show();
+                });
+            }
+            else
+            {
+                this.RunOnUiThread(() => //can only do this on UI thread
+                {
+                    Toast toast = Toast.MakeText(this, "Error with Smiles:(!", ToastLength.Short);
                     toast.Show();
                 });
             }

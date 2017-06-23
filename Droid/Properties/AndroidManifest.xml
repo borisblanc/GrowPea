@@ -5,7 +5,7 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-	<application android:label="SayCheese" android:hardwareAccelerated="true">
+	<application android:label="SayCheese" android:hardwareAccelerated="true" android:largeHeap="true">
 		<meta-data android:name="com.google.android.gms.vision.DEPENDENCIES" android:value="barcode,face"></meta-data>
 		<activity android:name=".MainActivity" android:screenOrientation="landscape" />
 	</application>

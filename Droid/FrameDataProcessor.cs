@@ -21,7 +21,9 @@ using Android.Util;
 using Java.Nio;
 
 using System.IO;
-
+using System.Threading.Tasks;
+using Java.Security;
+using Console = System.Console;
 
 
 namespace GrowPea.Droid
@@ -29,12 +31,89 @@ namespace GrowPea.Droid
     public class FrameDataProcessor
     {
 
-        private SortedList<float, BMFaces> _goodfaces;
+        private static readonly string TAG = "FrameDataProcessor";
 
 
-        private bool IsFrameDimensionSet = false;
-        private int FrameWidth;
-        private int FrameHeight;
+        public List<BmFace> ALLFaces;
+        private SortedList<float, FrameData> _allFrameData;
+
+        private readonly int _frameWidth;
+        private readonly int _frameHeight;
+
+        public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight)
+        {
+            _allFrameData = allframedata;
+            _frameWidth = framewidth;
+            _frameHeight = frameheight;
+            ALLFaces = new List<BmFace>();
+        }
+
+        public Task<bool> BeginProcessingFrames()
+        {
+            Task<bool> t = new Task<bool>(ProcessFrames);
+            t.Start();
+            return t;
+        }
+
+        private bool ProcessFrames()
+        {
+            //write code here to process
+            Log.Info(TAG, string.Format("number of frames {0}",_allFrameData.Values.Count));
+            var bestfaceframes = new List<BmFace>();
+
+            try
+            {
+                if (_allFrameData != null)
+                {
+                    foreach (var FD in _allFrameData.Values)
+                    {
+                        var face = GetSparseFace(FD._sparsearray);
+
+                        if (face != null)
+                        {
+                            var iUse = GetImageUsability(face);
+                            var bmap = GetBitmap(FD._bytebuff);
+                            ALLFaces.Add(new BmFace(FD._timestamp, bmap, iUse));
+                        }
+
+                    }
+
+                    if (ALLFaces.Count > 0)
+                    {
+                        var maxIuse = ALLFaces.Max(x => x.Iuse);
+                        int bestfaceIndex = ALLFaces.FindIndex(f => f.Iuse == maxIuse);
+                        bestfaceframes = ALLFaces.GetRange(bestfaceIndex - 10, 30); //range around bestface of 30 frames
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+
+            if (bestfaceframes.Count > 0)
+                return true;
+            else
+                return false;
+
+        }
+
+        private Face GetSparseFace(SparseArray array)
+        {
+            Face face = null;
+            for (int i = 0, nsize = array.Size(); i < nsize; i++)
+            {
+                Object obj = array.ValueAt(i);
+                if (obj != null && obj.GetType() == typeof(Face))
+                {
+                    face = (Face) obj;
+                    break;
+                }
+            }
+            return face;
+        }
+
 
         //private void QualifyBitmap(SparseArray detected, ByteBuffer framebuff, long framets)
         //{
@@ -46,50 +125,45 @@ namespace GrowPea.Droid
         //            var face = (Face)obj;
         //            var iUse = GetImageUsability(face);
 
-        //            if (_goodfaces.Count <= 20) //get 10 frames
+        //            if (GoodFaces.Count <= 20) //get 10 frames
         //            {
         //                var bmap = GetBitmap(framebuff);
-        //                _goodfaces.Add(framets, new BMFaces(bmap, face, iUse));
+        //                GoodFaces.Add(framets, new BMFaces(bmap, face, iUse));
         //            }
         //            else //save top 3 to phone
         //            {
-        //                isRecording = false; //turn off recording this will notify parents to stop also
 
-        //                lock (thisLock1)
+
+        //                //last = best
+        //                //var lastkey = _goodfaces.Keys.ToList().Last();
+        //                //var lastix = _goodfaces.IndexOfKey(lastkey);
+        //                //Bitmap bm = _goodfaces.Values[lastix].BM;
+        //                //ExportBitmapAsPNG(bm, lastkey);
+
+
+        //                ////second last/best
+        //                //bm = _goodfaces.Values[lastix - 1].BM;
+        //                //ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]);
+
+        //                ////third last/best
+        //                //bm = _goodfaces.Values[lastix - 2].BM;
+        //                //ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 2]);
+
+        //                foreach (var BMFace in _goodfaces.Values)
         //                {
-        //                    //last = best
-        //                    //var lastkey = _goodfaces.Keys.ToList().Last();
-        //                    //var lastix = _goodfaces.IndexOfKey(lastkey);
-        //                    //Bitmap bm = _goodfaces.Values[lastix].BM;
-        //                    //ExportBitmapAsPNG(bm, lastkey);
-
-
-        //                    ////second last/best
-        //                    //bm = _goodfaces.Values[lastix - 1].BM;
-        //                    //ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 1]);
-
-        //                    ////third last/best
-        //                    //bm = _goodfaces.Values[lastix - 2].BM;
-        //                    //ExportBitmapAsPNG(bm, _goodfaces.Keys[lastix - 2]);
-
-        //                    foreach (var BMFace in _goodfaces.Values)
-        //                    {
-        //                        ExportBitmapAsPNG(BMFace.BM, BMFace.Iuse);
-        //                    }
-
-        //                    _goodfaces.Clear();
+        //                    ExportBitmapAsPNG(BMFace.BM, BMFace.Iuse);
         //                }
 
+        //                _goodfaces.Clear();
 
         //            }
         //        }
         //    }
         //}
 
-        public String MakeBitmapVideo(List<Bitmap> images, String Savelocation, String name, int width, int height, int bitRate)
+        public String MakeBitmapVideo(List<Bitmap> images, String Savelocation, String name, int bitRate)
         {
-
-            //setParameters(640, 480, 4000000);
+            //if 640 by 480 use 4000000 bitrate
 
             var directory = new Java.IO.File(Savelocation);
             if (!directory.Exists())
@@ -100,7 +174,7 @@ namespace GrowPea.Droid
 
             try
             {
-                var encoder = new Encoder(width, height, bitRate, Savelocation);
+                var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, Savelocation);
                 encoder.EncodeAll(images);
             }
             catch
@@ -110,35 +184,25 @@ namespace GrowPea.Droid
             return outputfile.AbsolutePath;
         }
 
-        private void VerifyFrameDimensions(Frame frame)
-        {
-            if (!IsFrameDimensionSet)
-            {
-                FrameWidth = frame.GetMetadata().Width;
-                FrameHeight = frame.GetMetadata().Height;
-            }
-            else
-            {
-                if (FrameWidth != frame.GetMetadata().Width || FrameHeight != frame.GetMetadata().Height)
-                {
-                    throw new InvalidOperationException("Frame Dimensions can never change after processing starts"); //will always be landscape
-                }
 
-            }
-
-        }
 
         private Bitmap GetBitmap(ByteBuffer framebuff)
         {
-            var yuvimage = GetYUVImage(framebuff);
-
             Bitmap b;
-
-            using (var baos = new MemoryStream())
+            try
             {
-                yuvimage.CompressToJpeg(new Rect(0, 0, FrameWidth, FrameHeight), 100, baos); // Where 100 is the quality of the generated jpeg
-                byte[] jpegArray = baos.ToArray();
-                b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
+                var yuvimage = GetYUVImage(framebuff);
+                using (var baos = new MemoryStream())
+                {
+                    yuvimage.CompressToJpeg(new Rect(0, 0, _frameWidth, _frameHeight), 60, baos); // Where 100 is the quality of the generated jpeg
+                    byte[] jpegArray = baos.ToArray();
+                    b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
 
             return b;
@@ -149,7 +213,7 @@ namespace GrowPea.Droid
             byte[] barray = new byte[framebuff.Remaining()];
             framebuff.Get(barray);
 
-            return new YuvImage(barray, ImageFormatType.Nv21, FrameWidth, FrameHeight, null);
+            return new YuvImage(barray, ImageFormatType.Nv21, _frameWidth, _frameHeight, null);
         }
 
         private float GetImageUsability(Face face)
@@ -172,18 +236,18 @@ namespace GrowPea.Droid
 
     }
 
-    public class BMFaces
+    public class BmFace
     {
         public Bitmap BM;
 
-        public Face F;
-
         public float Iuse;
 
-        public BMFaces(Bitmap bitmap, Face face, float ImageUsability)
+        public float TS;
+
+        public BmFace(float timestamp, Bitmap bitmap, float ImageUsability)
         {
+            TS = timestamp;
             BM = bitmap;
-            F = face;
             Iuse = ImageUsability;
         }
     }

@@ -40,28 +40,26 @@ namespace GrowPea.Droid
         public CustomFaceDetector(FaceDetector detector)
         {
             _detector = detector;
+            _allFrameData = new SortedList<float, FrameData>();
         }
 
         public override SparseArray Detect(Frame frame)
         {
             if (isRecording)
             {
-                //VerifyFrameDimensions(frame);
-                //long _frametimestamp = 0;
-                //ByteBuffer _framebuff = null;
+                if (_allFrameData.Count > 10000) //cancel recording if too many frames are collected and notify subscribers
+                {
+                    isRecording = false;
+                }
 
-                var _framebuff =
-                    frame.GrayscaleImageData
-                        .Duplicate(); //must copy buffer right away before it gets overriden VERY IMPORTANT
+                var _framebuff = frame.GrayscaleImageData.Duplicate(); //must copy buffer right away before it gets overriden VERY IMPORTANT
                 var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
                 var detected = _detector.Detect(frame);
 
-                GatherData(detected, _framebuff, _frametimestamp);
+                if (!_allFrameData.ContainsKey(_frametimestamp))
+                    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, _framebuff, detected));
 
-                //QualifyBitmap(detected, _framebuff, _frametimestamp); //fire and forget
-
-                //framecount++;
                 return detected;
             }
             else
@@ -84,11 +82,9 @@ namespace GrowPea.Droid
 
         private void GatherData(SparseArray detected, ByteBuffer framebuff, float timestamp)
         {
-            if (_allFrameData == null)
-                _allFrameData = new SortedList<float, FrameData>();
-
             _allFrameData.Add(timestamp, new FrameData(timestamp, framebuff, detected));
         }
+
     }
 
 
