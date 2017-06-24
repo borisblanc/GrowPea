@@ -80,10 +80,6 @@ namespace GrowPea.Droid
         }
 
 
-        private void GatherData(SparseArray detected, ByteBuffer framebuff, float timestamp)
-        {
-            _allFrameData.Add(timestamp, new FrameData(timestamp, framebuff, detected));
-        }
 
     }
 

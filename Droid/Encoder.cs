@@ -17,6 +17,7 @@ using Java.Nio;
 using Exception = System.Exception;
 using String = System.String;
 using System.Diagnostics;
+using System.IO;
 using Android.Gms.Vision;
 using Android.Graphics;
 using Java.IO;
@@ -30,8 +31,6 @@ namespace GrowPea.Droid
 {
     public class Encoder
     {
-
-
 
         //  lots of logging parameters for the encoder  
         private static String MIME_TYPE = "video/avc";
@@ -122,9 +121,9 @@ namespace GrowPea.Droid
             return (132 + (value * (1000000 / FRAME_RATE)));
         }
 
-        public void EncodeAll(List<Bitmap> bmaps)
+        public void EncodeAll(List<ByteBuffer> bmaps)
         {
-            MediaMuxer muxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
+            //MediaMuxer muxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
             MediaCodec encoder = null;
 
             try
@@ -159,10 +158,167 @@ namespace GrowPea.Droid
 
                 foreach (var bmap in bmaps)
                 {
-                    Encode(bmap, encoder, muxer, videoTrackIndex);
+                    Encode(bmap, encoder, videoTrackIndex);
                     videoTrackIndex++;
                 }
 
+            }
+            catch(Exception e)
+            {
+                
+            }
+
+
+  
+        }
+
+        private Bitmap GetBitmap(ByteBuffer framebuff)
+        {
+            Bitmap b;
+            try
+            {
+                var yuvimage = GetYUVImage(framebuff);
+                using (var baos = new MemoryStream())
+                {
+                    yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, mWidth, mHeight), 100, baos); // Where 90 is the quality of the generated jpeg
+                    byte[] jpegArray = baos.ToArray();
+                    var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
+                    b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length, bitmapoptions);
+                    //b = Resize(bitmap, 640, 480);
+                }
+            }
+            catch (Exception e)
+            {
+                System.Console.WriteLine(e);
+                throw;
+            }
+
+            return b;
+        }
+
+        private YuvImage GetYUVImage(ByteBuffer framebuff)
+        {
+            byte[] barray = new byte[framebuff.Remaining()];
+            framebuff.Get(barray);
+
+            return new YuvImage(barray, ImageFormatType.Nv21, mWidth, mHeight, null);
+        }
+
+
+        private void Encode(ByteBuffer bb, MediaCodec encoder, int track_indx)
+        {
+            MediaMuxer muxer = null;
+            MediaCodec.BufferInfo enc_info = new MediaCodec.BufferInfo();
+            var enc_outputDone = false;
+            var enc_inputDone = false;
+
+            const int TIMEOUT_USEC = 10000;
+
+            ByteBuffer[] encoderInputBuffers = encoder.GetInputBuffers();
+            ByteBuffer[] enc_outputBuffers = encoder.GetOutputBuffers();
+
+            try
+            {
+
+                while (!enc_outputDone)
+                {
+                    if (!enc_inputDone)
+                    {
+                        int inputBufIndex = encoder.DequeueInputBuffer(TIMEOUT_USEC);
+                        if (inputBufIndex >= 0)
+                        {
+                            ByteBuffer inputBuf = encoderInputBuffers[inputBufIndex];
+                            int chunkSize = 0;
+
+                            if (bb == null)
+                            {
+                            }
+                            else
+                            {
+                                Bitmap b = GetBitmap(bb);
+
+                                int mWidth = b.Width;
+                                int mHeight = b.Height;
+
+                                byte[] yuv = new byte[mWidth * mHeight * 3 / 2];
+                                int[] argb = new int[mWidth * mHeight];
+
+                                b.GetPixels(argb, 0, mWidth, 0, 0, mWidth, mHeight);
+                                encodeYUV420SP(yuv, argb, mWidth, mHeight);
+
+                                b.Recycle();
+                                b = null;
+                                inputBuf.Put(yuv);
+                                chunkSize = yuv.Length;
+                            }
+
+                            if (chunkSize < 0)
+                            {
+                                encoder.QueueInputBuffer(inputBufIndex, 0, 0, 0L, MediaCodecBufferFlags.EndOfStream);
+                            }
+                            else
+                            {
+                                long presentationTimeUs = computePresentationTime(track_indx);
+                                System.Diagnostics.Debug.WriteLine("Encode", "Encode Time: " + presentationTimeUs);
+                                encoder.QueueInputBuffer(inputBufIndex, 0, chunkSize, presentationTimeUs, 0);
+                                inputBuf.Clear();
+
+                                encoderInputBuffers[inputBufIndex].Clear();
+                                enc_inputDone = true;
+                            }
+                        }
+                    }
+                    if (!enc_outputDone)
+                    {
+                        int enc_decoderStatus = encoder.DequeueOutputBuffer(enc_info, TIMEOUT_USEC);
+                        if (enc_decoderStatus == (int) MediaCodecInfoState.TryAgainLater)
+                        {
+                        }
+                        else if (enc_decoderStatus == (int) MediaCodecInfoState.OutputBuffersChanged)
+                        {
+                            enc_outputBuffers = encoder.GetOutputBuffers();
+                        }
+                        else if (enc_decoderStatus == (int) MediaCodecInfoState.OutputFormatChanged)
+                        {
+                            //MediaFormat newFormat = encoder.GetOutputFormat(); not used
+                        }
+                        else if (enc_decoderStatus < 0)
+                        {
+                        }
+                        else
+                        {
+                            if ((enc_info.Flags & MediaCodecBufferFlags.EndOfStream) != 0)
+                            {
+                                enc_outputDone = true;
+                            }
+
+                            bool enc_doRender = (enc_info.Size != 0);
+                            encoder.ReleaseOutputBuffer(enc_decoderStatus, false);
+                            if (enc_doRender)
+                            {
+                                enc_outputDone = true;
+                                ByteBuffer enc_buffer = enc_outputBuffers[enc_decoderStatus];
+
+                                try
+                                {
+                                    muxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
+                                    muxer.WriteSampleData(track_indx, enc_buffer, enc_info);
+                                }
+                                catch (Exception e)
+                                {
+                                    //e.printStackTrace();
+                                }
+                                finally
+                                {
+
+                                }
+
+                                enc_buffer.Clear();
+                                enc_outputBuffers[enc_decoderStatus].Clear();
+                            }
+                        }
+                    }
+                }
             }
             finally
             {
@@ -177,111 +333,7 @@ namespace GrowPea.Droid
                     muxer.Release();
                 }
             }
-        }
 
-
-        private void Encode(Bitmap b, MediaCodec encoder, MediaMuxer muxer, int track_indx)
-        {
-            MediaCodec.BufferInfo enc_info = new MediaCodec.BufferInfo();
-            var enc_outputDone = false;
-            var enc_inputDone = false;
-
-            const int TIMEOUT_USEC = 10000;
-
-            ByteBuffer[] encoderInputBuffers = encoder.GetInputBuffers();
-            ByteBuffer[] enc_outputBuffers = encoder.GetOutputBuffers();
-
-            while (!enc_outputDone)
-            {
-                if (!enc_inputDone)
-                {
-                    int inputBufIndex = encoder.DequeueInputBuffer(TIMEOUT_USEC);
-                    if (inputBufIndex >= 0)
-                    {
-                        ByteBuffer inputBuf = encoderInputBuffers[inputBufIndex];
-                        int chunkSize = 0;
-
-                        if (b == null)
-                        {
-                        }
-                        else
-                        {
-                            int mWidth = b.Width;
-                            int mHeight = b.Height;
-
-                            byte[] yuv = new byte[mWidth * mHeight * 3 / 2];
-                            int[] argb = new int[mWidth * mHeight];
-
-                            b.GetPixels(argb, 0, mWidth, 0, 0, mWidth, mHeight);
-                            encodeYUV420SP(yuv, argb, mWidth, mHeight);
-
-                            b.Recycle();
-                            b = null;
-                            inputBuf.Put(yuv);
-                            chunkSize = yuv.Length;
-                        }
-
-                        if (chunkSize < 0)
-                        {
-                            encoder.QueueInputBuffer(inputBufIndex, 0, 0, 0L, MediaCodecBufferFlags.EndOfStream);
-                        }
-                        else
-                        {
-                            long presentationTimeUs = computePresentationTime(track_indx);
-                            System.Diagnostics.Debug.WriteLine("Encode", "Encode Time: " + presentationTimeUs);
-                            encoder.QueueInputBuffer(inputBufIndex, 0, chunkSize, presentationTimeUs, 0);
-                            inputBuf.Clear();
-
-                            encoderInputBuffers[inputBufIndex].Clear();
-                            enc_inputDone = true;
-                        }
-                    }
-                }
-                if (!enc_outputDone)
-                {
-                    int enc_decoderStatus = encoder.DequeueOutputBuffer(enc_info, TIMEOUT_USEC);
-                    if (enc_decoderStatus == (int) MediaCodecInfoState.TryAgainLater)
-                    {
-                    }
-                    else if (enc_decoderStatus == (int) MediaCodecInfoState.OutputBuffersChanged)
-                    {
-                        enc_outputBuffers = encoder.GetOutputBuffers();
-                    }
-                    else if (enc_decoderStatus == (int) MediaCodecInfoState.OutputFormatChanged)
-                    {
-                        //MediaFormat newFormat = encoder.GetOutputFormat(); not used
-                    }
-                    else if (enc_decoderStatus < 0)
-                    {
-                    }
-                    else
-                    {
-                        if ((enc_info.Flags & MediaCodecBufferFlags.EndOfStream) != 0)
-                        {
-                            enc_outputDone = true;
-                        }
-
-                        bool enc_doRender = (enc_info.Size != 0);
-                        encoder.ReleaseOutputBuffer(enc_decoderStatus, false);
-                        if (enc_doRender)
-                        {
-                            enc_outputDone = true;
-                            ByteBuffer enc_buffer = enc_outputBuffers[enc_decoderStatus];
-
-                            try
-                            {
-                                muxer.WriteSampleData(track_indx, enc_buffer, enc_info);
-                            }
-                            catch (Exception e)
-                            {
-                                //e.printStackTrace();
-                            }
-                            enc_buffer.Clear();
-                            enc_outputBuffers[enc_decoderStatus].Clear();
-                        }
-                    }
-                }
-            }
         }
 
         private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
