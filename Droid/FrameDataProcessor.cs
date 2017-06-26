@@ -22,8 +22,12 @@ using Java.Nio;
 
 using System.IO;
 using System.Threading.Tasks;
+using Java.Lang;
 using Java.Security;
 using Console = System.Console;
+using Exception = System.Exception;
+using Object = System.Object;
+using String = System.String;
 
 
 namespace GrowPea.Droid
@@ -42,7 +46,29 @@ namespace GrowPea.Droid
 
         private static readonly Object obj = new Object();
 
-        private string filepath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
+        private int _bitRate;
+
+        private int bitRate
+        {
+            get
+            {
+                //if 640 by 480 use 4000000 bitrate
+                //if 320 by 240 use 2000000 bitrate
+                if (_frameWidth == 640 && _frameHeight == 480)
+                    _bitRate = 4000000;
+                else if (_frameWidth == 320 && _frameHeight == 240)
+                    _bitRate = 2000000;
+                else
+                {
+                    Log.Error(TAG, "Uknown bitrate calculation");
+                    throw new RuntimeException("Uknown bitrate calculation");
+                }
+                return _bitRate;
+            }
+            
+        }
+
+
 
         public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight)
         {
@@ -96,13 +122,18 @@ namespace GrowPea.Droid
                             .Where(f => f.Value.Iuse == maxIuse)
                             .First(f => f.Index >= frameoffsetMinusStart &&
                                         f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)); //offsets take into account array size so best face is within bounds
-                        bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
+                        lock (obj
+                            )
+                        {
+                            bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
+                        }
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.Error(TAG, "Frames Processing messed up", e);
+                throw new RuntimeException("Frames Processing messed up");
             }
 
 
@@ -111,13 +142,9 @@ namespace GrowPea.Droid
             //    ExportBitmapAsPNG(bestfaceframes[i].BM, i); 
             //}
 
-
-
-
-
             List<ByteBuffer> allBitmaps = bestfaceframes.Select(f => f.bytebuff).ToList();
 
-            string outputfilepath = MakeBufferVideo(allBitmaps, filepath, DateTime.Now.Ticks.ToString(), 2000000);
+            string outputfilepath = MakeBufferVideo(allBitmaps, DateTime.Now.Ticks.ToString());
 
             if ( outputfilepath != null)
                 return true;
@@ -143,81 +170,34 @@ namespace GrowPea.Droid
 
 
 
-        public String MakeBufferVideo(List<ByteBuffer> imagesinfo, String Savelocation, String name, int bitRate)
+        public String MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
         {
-            //if 640 by 480 use 4000000 bitrate
-            //if 320 by 240 use 2000000 bitrate
+            var Savelocation = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
 
             var directory = new Java.IO.File(Savelocation);
             if (!directory.Exists())
             {
                 directory.Mkdir();
             }
-            var outputfile = new Java.IO.File(directory, name + ".mp4");
+            var outputfilepath = new Java.IO.File(directory, filename + ".mp4").AbsolutePath;
 
             try
             {
-                //var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, outputfile.AbsolutePath);
-                //encoder.EncodeAll(imagesinfo);
-
-                //var encoder = new EncodeAndMux();
-                //encoder.StartSHit(imagesinfo, _frameWidth,_frameHeight, bitRate);
-
-                var encoder = new EncoderMuxer();
-                encoder.EncodeVideoToMp4(imagesinfo);
+                var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
+                encoder.EncodeVideoToMp4();
             }
             catch(Exception e)
             {
 
             }
-            return outputfile.AbsolutePath;
+            return outputfilepath;
         }
 
-
-
-        //private Bitmap GetBitmap(ByteBuffer framebuff)
-        //{
-        //    Bitmap b;
-        //    try
-        //    {
-        //        var yuvimage = GetYUVImage(framebuff);
-        //        using (var baos = new MemoryStream())
-        //        {
-        //            yuvimage.CompressToJpeg(new Rect(0, 0, _frameWidth, _frameHeight), 100, baos); // Where 90 is the quality of the generated jpeg
-        //            byte[] jpegArray = baos.ToArray();
-        //            var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
-        //            b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length, bitmapoptions);
-        //            //b = Resize(bitmap, 640, 480);
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e);
-        //        throw;
-        //    }
-
-        //    return b;
-        //}
-
-
-
-        //private YuvImage GetYUVImage(ByteBuffer framebuff)
-        //{
-        //    byte[] barray = new byte[framebuff.Remaining()];
-        //    framebuff.Get(barray);
-
-        //    return new YuvImage(barray, ImageFormatType.Nv21, _frameWidth, _frameHeight, null);
-        //}
 
         private float GetImageUsability(Face face)
         {
             return ((face.IsSmilingProbability * 2) + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability) / 3;
         }
-
-
-
-
-
 
     }
 
