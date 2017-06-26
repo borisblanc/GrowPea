@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Android.Graphics;
 using Android.Media;
@@ -96,7 +97,7 @@ namespace GrowPea.Droid
             //for (int i = 0; (i < bmaps.Count); i++)
             //{
             //  Feed any pending encoder output into the muxer.
-            this.drainEncoder(false);
+            this.drainEncoder();
             //  Generate a new frame of input.
             //this.generateSurfaceFrame(i);
             //this.mInputSurface.setPresentationTime(computePresentationTimeNsec(i));
@@ -114,7 +115,7 @@ namespace GrowPea.Droid
             //}
 
             //  send end-of-stream to encoder, and drain remaining output
-            this.drainEncoder(true);
+            //this.drainEncoder(true);
         }
         catch (Exception e)
         {
@@ -166,7 +167,7 @@ namespace GrowPea.Droid
         this.mEncoder.Start();
         //  Output filename.  Ideally this would use Context.getFilesDir() rather than a
         //  hard-coded output directory.
-        String outputPath = new File(OUTPUT_DIR, ("test."+ (this.mWidth + ("x"+ (this.mHeight + ".mp4"))))).ToString();
+        String outputPath = new File(OUTPUT_DIR, (DateTime.Now.Ticks + (this.mWidth + ("x"+ (this.mHeight + ".mp4"))))).ToString();
         //Log.d(TAG, ("output file is " + outputPath));
         //  Create a MediaMuxer.  We can't add the video track and start() the muxer here,
         //  because our MediaFormat doesn't have the Magic Goodies.  These can only be
@@ -282,7 +283,7 @@ namespace GrowPea.Droid
         return (132 + (value * (1000000 / FRAME_RATE)));
     }
 
-    private void drainEncoder(bool endOfStream)
+    private void drainEncoder()
     {
         int TIMEOUT_USEC = 10000;
         //if (VERBOSE)
@@ -290,15 +291,15 @@ namespace GrowPea.Droid
         //    //Log.d(TAG, ("drainEncoder("+ (endOfStream + ")")));
         //}
 
-        if (endOfStream)
-        {
-            //if (VERBOSE)
-            //{
-            //Log.d(TAG, "sending EOS to encoder");
-            //}
+        //if (endOfStream)
+        //{
+        //    //if (VERBOSE)
+        //    //{
+        //    //Log.d(TAG, "sending EOS to encoder");
+        //    //}
 
-            this.mEncoder.SignalEndOfInputStream();
-        }
+        //    this.mEncoder.SignalEndOfInputStream();
+        //}
 
 
         ByteBuffer[] encoderInputBuffers = mEncoder.GetInputBuffers();
@@ -380,15 +381,15 @@ namespace GrowPea.Droid
                 if ((encoderStatus == (int) MediaCodec.InfoTryAgainLater))
                 {
                     //  no output available yet
-                    if (!endOfStream)
-                    {
+                    //if (!endOfStream)
+                    //{
                         break;
                         //  out of while
-                    }
-                    else if (VERBOSE)
-                    {
-                        //Log.d(TAG, "no output available, spinning to await EOS");
-                    }
+                    //}
+                    //else if (VERBOSE)
+                    //{
+                    //    //Log.d(TAG, "no output available, spinning to await EOS");
+                    //}
 
                 }
                 else if ((encoderStatus == (int) MediaCodec.InfoOutputBuffersChanged))
@@ -458,14 +459,14 @@ namespace GrowPea.Droid
                     this.mEncoder.ReleaseOutputBuffer(encoderStatus, false);
                     if (((this.mBufferInfo.Flags & MediaCodec.BufferFlagEndOfStream) != 0))
                     {
-                        if (!endOfStream)
-                        {
-                            //Log.w(TAG, "reached end of stream unexpectedly");
-                        }
-                        else if (VERBOSE)
-                        {
-                            //Log.d(TAG, "end of stream reached");
-                        }
+                        //if (!endOfStream)
+                        //{
+                        //    //Log.w(TAG, "reached end of stream unexpectedly");
+                        //}
+                        //else if (VERBOSE)
+                        //{
+                        //    //Log.d(TAG, "end of stream reached");
+                        //}
 
                         break;
                         //  out of while
@@ -533,8 +534,8 @@ namespace GrowPea.Droid
             {
                 yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, mWidth, mHeight), 100, baos); // Where 90 is the quality of the generated jpeg
                 byte[] jpegArray = baos.ToArray();
-                var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
-                b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length, bitmapoptions);
+                //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
+                b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
                 //b = Resize(bitmap, 640, 480);
             }
         }
