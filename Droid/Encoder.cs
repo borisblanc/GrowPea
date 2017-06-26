@@ -123,7 +123,7 @@ namespace GrowPea.Droid
 
         public void EncodeAll(List<ByteBuffer> bmaps)
         {
-            //MediaMuxer muxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
+            MediaMuxer muxer = new MediaMuxer(outputPath, MuxerOutputType.Mpeg4);
             MediaCodec encoder = null;
 
             try
@@ -154,11 +154,13 @@ namespace GrowPea.Droid
 
                 encoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
 
+                encoder.Start();
+
                 var videoTrackIndex = 0;
 
                 foreach (var bmap in bmaps)
                 {
-                    Encode(bmap, encoder, videoTrackIndex);
+                    Encode(bmap, encoder, muxer, videoTrackIndex);
                     videoTrackIndex++;
                 }
 
@@ -167,9 +169,20 @@ namespace GrowPea.Droid
             {
                 
             }
+            finally
+            {
+                if (encoder != null)
+                {
+                    encoder.Stop();
+                    encoder.Release();
+                }
+                if (muxer != null)
+                {
+                    muxer.Stop();
+                    muxer.Release();
+                }
+            }
 
-
-  
         }
 
         private Bitmap GetBitmap(ByteBuffer framebuff)
@@ -205,14 +218,14 @@ namespace GrowPea.Droid
         }
 
 
-        private void Encode(ByteBuffer bb, MediaCodec encoder, int track_indx)
+        private void Encode(ByteBuffer bb, MediaCodec encoder,MediaMuxer muxer, int track_indx)
         {
-            MediaMuxer muxer = null;
             MediaCodec.BufferInfo enc_info = new MediaCodec.BufferInfo();
             var enc_outputDone = false;
             var enc_inputDone = false;
 
             const int TIMEOUT_USEC = 10000;
+
 
             ByteBuffer[] encoderInputBuffers = encoder.GetInputBuffers();
             ByteBuffer[] enc_outputBuffers = encoder.GetOutputBuffers();
@@ -280,7 +293,9 @@ namespace GrowPea.Droid
                         }
                         else if (enc_decoderStatus == (int) MediaCodecInfoState.OutputFormatChanged)
                         {
-                            //MediaFormat newFormat = encoder.GetOutputFormat(); not used
+                            MediaFormat newFormat = encoder.OutputFormat;
+                            track_indx = muxer.AddTrack(newFormat);
+                            muxer.Start();
                         }
                         else if (enc_decoderStatus < 0)
                         {
@@ -308,10 +323,6 @@ namespace GrowPea.Droid
                                 {
                                     //e.printStackTrace();
                                 }
-                                finally
-                                {
-
-                                }
 
                                 enc_buffer.Clear();
                                 enc_outputBuffers[enc_decoderStatus].Clear();
@@ -320,19 +331,11 @@ namespace GrowPea.Droid
                     }
                 }
             }
-            finally
+            catch (Exception e)
             {
-                if (encoder != null)
-                {
-                    encoder.Stop();
-                    encoder.Release();
-                }
-                if (muxer != null)
-                {
-                    muxer.Stop();
-                    muxer.Release();
-                }
+                
             }
+
 
         }
 

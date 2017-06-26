@@ -92,9 +92,10 @@ namespace GrowPea.Droid
                
 
                         var maxIuse = ALLFaces.Max(x => x.Iuse);
-                        var bestfaceIndex = ALLFaces.Select((Value, Index) => new { Value, Index })
-                            .Where(f => f.Index >= frameoffsetMinusStart && f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart))
-                            .First(f => f.Value.Iuse == maxIuse); //offsets take into account array size so best face is within bounds
+                        var bestfaceIndex = ALLFaces.Select((Value, Index) => new {Value, Index})
+                            .Where(f => f.Value.Iuse == maxIuse)
+                            .First(f => f.Index >= frameoffsetMinusStart &&
+                                        f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)); //offsets take into account array size so best face is within bounds
                         bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
                     }
                 }
@@ -156,8 +157,11 @@ namespace GrowPea.Droid
 
             try
             {
-                var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, Savelocation);
+                var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, outputfile.AbsolutePath);
                 encoder.EncodeAll(imagesinfo);
+
+                //var encoder = new EncodeAndMux();
+                //encoder.StartSHit(imagesinfo, _frameWidth,_frameHeight, bitRate);
             }
             catch(Exception e)
             {
