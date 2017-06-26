@@ -83,6 +83,7 @@
     <Compile Include="Encoder.cs" />
     <Compile Include="EncodeAndMux.cs" />
     <Compile Include="EncoderMux.cs" />
+    <Compile Include="EncoderMuxer.cs" />
     <Compile Include="FaceGraphic.cs" />
     <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="Growsaic.cs" />

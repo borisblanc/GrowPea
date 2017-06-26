@@ -99,7 +99,7 @@
 //        mBitRate = bitRate;
 //    }
 
-//    public void testEncodeDecodeVideoFromBufferToBuffer720p() 
+//    public void testEncodeDecodeVideoFromBufferToBuffer720p()
 //    {
 //        setParameters(1280, 720, 6000000);
 //        encodeDecodeVideoFromBuffer(false);
@@ -113,54 +113,54 @@
 //    * <p>
 //    * See http://b.android.com/37769 for a discussion of input format pitfalls.
 //    */
-//    private void encodeDecodeVideoFromBuffer(bool toSurface) 
+//    private void encodeDecodeVideoFromBuffer(bool toSurface)
 //    {
 //        MediaCodec encoder = null;
 //        MediaCodec decoder = null;
 //        mLargestColorDelta = -1;
 //        try
 //        {
-//        MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
-//        if (codecInfo == null)
-//        {
-//            // Don't fail CTS if they don't have an AVC codec (not here, anyway).
-//            //Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
-//            return;
-//        }
+//            MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
+//            if (codecInfo == null)
+//            {
+//                // Don't fail CTS if they don't have an AVC codec (not here, anyway).
+//                //Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
+//                return;
+//            }
 
-//        int colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
+//            int colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
 
-//        // We avoid the device-specific limitations on width and height by using values that
-//        // are multiples of 16, which all tested devices seem to be able to handle.
-//        MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, mWidth, mHeight);
-//        // Set some properties.  Failing to specify some of these can cause the MediaCodec
-//        // configure() call to throw an unhelpful exception.
-//        format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
-//        format.SetInteger(MediaFormat.KeyBitRate, mBitRate);
-//        format.SetInteger(MediaFormat.KeyFrameRate, FRAME_RATE);
-//        format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
+//            // We avoid the device-specific limitations on width and height by using values that
+//            // are multiples of 16, which all tested devices seem to be able to handle.
+//            MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, mWidth, mHeight);
+//            // Set some properties.  Failing to specify some of these can cause the MediaCodec
+//            // configure() call to throw an unhelpful exception.
+//            format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
+//            format.SetInteger(MediaFormat.KeyBitRate, mBitRate);
+//            format.SetInteger(MediaFormat.KeyFrameRate, FRAME_RATE);
+//            format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
 
 
-//        // Create a MediaCodec for the desired codec, then configure it as an encoder with
-//        // our desired properties.
-//        encoder = MediaCodec.CreateByCodecName(codecInfo.Name);
-//        encoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
-//        encoder.Start();
-//        // Create a MediaCodec for the decoder, just based on the MIME type.  The various
-//        // format details will be passed through the csd-0 meta-data later on.
-//        String outputPath = new File(OUTPUT_DIR,"test." + mWidth + "x" + mHeight + ".mp4").ToString();
+//            // Create a MediaCodec for the desired codec, then configure it as an encoder with
+//            // our desired properties.
+//            encoder = MediaCodec.CreateByCodecName(codecInfo.Name);
+//            encoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
+//            encoder.Start();
+//            // Create a MediaCodec for the decoder, just based on the MIME type.  The various
+//            // format details will be passed through the csd-0 meta-data later on.
+//            String outputPath = new File(OUTPUT_DIR, "test." + mWidth + "x" + mHeight + ".mp4").ToString();
 
-//        doEncodeDecodeVideoFromBuffer(encoder, colorFormat, decoder, toSurface);
+//            doEncodeDecodeVideoFromBuffer(encoder, colorFormat,  toSurface);
 
 //        }
 //        finally
 //        {
 
-//        if (encoder != null)
-//        {
-//            encoder.Stop();
-//            encoder.Release();
-//        }
+//            if (encoder != null)
+//            {
+//                encoder.Stop();
+//                encoder.Release();
+//            }
 
 
 //        }
@@ -267,7 +267,7 @@
 //            //Log.w(TAG, "Unable to create debug output file " + fileName);
 //            throw new RuntimeException(ioe);
 //        }
-        
+
 //        //if (toSurface)
 //        //{
 //        //    outputSurface = new OutputSurface(mWidth, mHeight);
@@ -343,7 +343,7 @@
 //                {
 //                    // not expected for an encoder
 //                    MediaFormat newFormat = encoder.OutputFormat;
-//                   // if (VERBOSE) Log.d(TAG, "encoder output format changed: " + newFormat);
+//                    // if (VERBOSE) Log.d(TAG, "encoder output format changed: " + newFormat);
 //                }
 //                else if (encoderStatus < 0)
 //                {
@@ -383,7 +383,7 @@
 //                        //assertFalse(decoderConfigured);
 //                        MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, mWidth, mHeight);
 //                        format.SetByteBuffer("csd-0", encodedData);
-//                        decoder.configure(format, toSurface ? outputSurface.getSurface() : null,null, 0);
+//                        decoder.configure(format, toSurface ? outputSurface.getSurface() : null, null, 0);
 //                        decoder.start();
 //                        decoderInputBuffers = decoder.getInputBuffers();
 //                        decoderOutputBuffers = decoder.getOutputBuffers();
@@ -415,90 +415,90 @@
 //            // ByteBuffer references will be null.  The data is sent to Surface instead.
 //            //if (decoderConfigured)
 //            //{
-//                //int decoderStatus = decoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
-//                //if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER)
-//                //{
-//                //    // no output available yet
-//                //    if (VERBOSE) Log.d(TAG, "no output from decoder available");
-//                //}
-//                //else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED)
-//                //{
-//                //    // The storage associated with the direct ByteBuffer may already be unmapped,
-//                //    // so attempting to access data through the old output buffer array could
-//                //    // lead to a native crash.
-//                //    if (VERBOSE) Log.d(TAG, "decoder output buffers changed");
-//                //    decoderOutputBuffers = decoder.getOutputBuffers();
-//                //}
-//                //else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
-//                //{
-//                //    // this happens before the first frame is returned
-//                //    decoderOutputFormat = decoder.getOutputFormat();
-//                //    if (VERBOSE) Log.d(TAG, "decoder output format changed: " +
-//                //                            decoderOutputFormat);
-//                //}
-//                //else if (decoderStatus < 0)
-//                //{
-//                //    fail("unexpected result from deocder.dequeueOutputBuffer: " + decoderStatus);
-//                //}
-//                //else
-//                //{  // decoderStatus >= 0
-//                //    if (!toSurface)
-//                //    {
-//                //        ByteBuffer outputFrame = decoderOutputBuffers[decoderStatus];
-//                //        outputFrame.position(info.offset);
-//                //        outputFrame.limit(info.offset + info.size);
-//                //        rawSize += info.size;
-//                //        if (info.size == 0)
-//                //        {
-//                //            if (VERBOSE) Log.d(TAG, "got empty frame");
-//                //        }
-//                //        else
-//                //        {
-//                //            if (VERBOSE) Log.d(TAG, "decoded, checking frame " + checkIndex);
-//                //            assertEquals("Wrong time stamp", computePresentationTime(checkIndex),
-//                //                info.presentationTimeUs);
-//                //            if (!checkFrame(checkIndex++, decoderOutputFormat, outputFrame))
-//                //            {
-//                //                badFrames++;
-//                //            }
-//                //        }
-//                //        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
-//                //        {
-//                //            if (VERBOSE) Log.d(TAG, "output EOS");
-//                //            outputDone = true;
-//                //        }
-//                //        decoder.releaseOutputBuffer(decoderStatus, false /*render*/);
-//                //    }
-//                //    else
-//                //    {
-//                //        if (VERBOSE) Log.d(TAG, "surface decoder given buffer " + decoderStatus +
-//                //                                " (size=" + info.size + ")");
-//                //        rawSize += info.size;
-//                //        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
-//                //        {
-//                //            if (VERBOSE) Log.d(TAG, "output EOS");
-//                //            outputDone = true;
-//                //        }
-//                //        boolean doRender = (info.size != 0);
-//                //        // As soon as we call releaseOutputBuffer, the buffer will be forwarded
-//                //        // to SurfaceTexture to convert to a texture.  The API doesn't guarantee
-//                //        // that the texture will be available before the call returns, so we
-//                //        // need to wait for the onFrameAvailable callback to fire.
-//                //        decoder.releaseOutputBuffer(decoderStatus, doRender);
-//                //        if (doRender)
-//                //        {
-//                //            if (VERBOSE) Log.d(TAG, "awaiting frame " + checkIndex);
-//                //            assertEquals("Wrong time stamp", computePresentationTime(checkIndex),
-//                //                info.presentationTimeUs);
-//                //            outputSurface.awaitNewImage();
-//                //            outputSurface.drawImage();
-//                //            if (!checkSurfaceFrame(checkIndex++))
-//                //            {
-//                //                badFrames++;
-//                //            }
-//                //        }
-//                //    }
-//                //}
+//            //int decoderStatus = decoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
+//            //if (decoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER)
+//            //{
+//            //    // no output available yet
+//            //    if (VERBOSE) Log.d(TAG, "no output from decoder available");
+//            //}
+//            //else if (decoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED)
+//            //{
+//            //    // The storage associated with the direct ByteBuffer may already be unmapped,
+//            //    // so attempting to access data through the old output buffer array could
+//            //    // lead to a native crash.
+//            //    if (VERBOSE) Log.d(TAG, "decoder output buffers changed");
+//            //    decoderOutputBuffers = decoder.getOutputBuffers();
+//            //}
+//            //else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
+//            //{
+//            //    // this happens before the first frame is returned
+//            //    decoderOutputFormat = decoder.getOutputFormat();
+//            //    if (VERBOSE) Log.d(TAG, "decoder output format changed: " +
+//            //                            decoderOutputFormat);
+//            //}
+//            //else if (decoderStatus < 0)
+//            //{
+//            //    fail("unexpected result from deocder.dequeueOutputBuffer: " + decoderStatus);
+//            //}
+//            //else
+//            //{  // decoderStatus >= 0
+//            //    if (!toSurface)
+//            //    {
+//            //        ByteBuffer outputFrame = decoderOutputBuffers[decoderStatus];
+//            //        outputFrame.position(info.offset);
+//            //        outputFrame.limit(info.offset + info.size);
+//            //        rawSize += info.size;
+//            //        if (info.size == 0)
+//            //        {
+//            //            if (VERBOSE) Log.d(TAG, "got empty frame");
+//            //        }
+//            //        else
+//            //        {
+//            //            if (VERBOSE) Log.d(TAG, "decoded, checking frame " + checkIndex);
+//            //            assertEquals("Wrong time stamp", computePresentationTime(checkIndex),
+//            //                info.presentationTimeUs);
+//            //            if (!checkFrame(checkIndex++, decoderOutputFormat, outputFrame))
+//            //            {
+//            //                badFrames++;
+//            //            }
+//            //        }
+//            //        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+//            //        {
+//            //            if (VERBOSE) Log.d(TAG, "output EOS");
+//            //            outputDone = true;
+//            //        }
+//            //        decoder.releaseOutputBuffer(decoderStatus, false /*render*/);
+//            //    }
+//            //    else
+//            //    {
+//            //        if (VERBOSE) Log.d(TAG, "surface decoder given buffer " + decoderStatus +
+//            //                                " (size=" + info.size + ")");
+//            //        rawSize += info.size;
+//            //        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+//            //        {
+//            //            if (VERBOSE) Log.d(TAG, "output EOS");
+//            //            outputDone = true;
+//            //        }
+//            //        boolean doRender = (info.size != 0);
+//            //        // As soon as we call releaseOutputBuffer, the buffer will be forwarded
+//            //        // to SurfaceTexture to convert to a texture.  The API doesn't guarantee
+//            //        // that the texture will be available before the call returns, so we
+//            //        // need to wait for the onFrameAvailable callback to fire.
+//            //        decoder.releaseOutputBuffer(decoderStatus, doRender);
+//            //        if (doRender)
+//            //        {
+//            //            if (VERBOSE) Log.d(TAG, "awaiting frame " + checkIndex);
+//            //            assertEquals("Wrong time stamp", computePresentationTime(checkIndex),
+//            //                info.presentationTimeUs);
+//            //            outputSurface.awaitNewImage();
+//            //            outputSurface.drawImage();
+//            //            if (!checkSurfaceFrame(checkIndex++))
+//            //            {
+//            //                badFrames++;
+//            //            }
+//            //        }
+//            //    }
+//            //}
 //            //}
 //        }
 
@@ -518,70 +518,70 @@
 //    }
 
 
-//    //private void prepareEncoder()
-//    //{
-//    //    this.mBufferInfo = new MediaCodec.BufferInfo();
-//    //    MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, mWidth, mHeight);
-//    //    //  Set some properties.  Failing to specify some of these can cause the MediaCodec
-//    //    //  configure() call to throw an unhelpful exception.
+//    private void prepareEncoder()
+//    {
+//        this.mBufferInfo = new MediaCodec.BufferInfo();
+//        MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, mWidth, mHeight);
+//        //  Set some properties.  Failing to specify some of these can cause the MediaCodec
+//        //  configure() call to throw an unhelpful exception.
 
-//    //    MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
+//        MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
 
-//    //    int colorFormat;
-//    //    try
-//    //    {
-//    //        colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
-//    //    }
-//    //    catch
-//    //    {
-//    //        colorFormat = (int)MediaCodecCapabilities.Formatyuv420semiplanar;
-//    //    }
+//        int colorFormat;
+//        try
+//        {
+//            colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
+//        }
+//        catch
+//        {
+//            colorFormat = (int)MediaCodecCapabilities.Formatyuv420semiplanar;
+//        }
 
-//    //    format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
-//    //    format.SetInteger(MediaFormat.KeyBitRate, mBitRate);
-//    //    format.SetInteger(MediaFormat.KeyFrameRate, FRAME_RATE);
-//    //    format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
+//        format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
+//        format.SetInteger(MediaFormat.KeyBitRate, mBitRate);
+//        format.SetInteger(MediaFormat.KeyFrameRate, FRAME_RATE);
+//        format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
 
-//    //    //format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+//        //format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
 
-//    //    //if (VERBOSE)
-//    //    //{
-//    //    //Log.d(TAG, ("format: " + format));
-//    //    //}
+//        //if (VERBOSE)
+//        //{
+//        //Log.d(TAG, ("format: " + format));
+//        //}
 
-//    //    //  Create a MediaCodec encoder, and configure it with our format.  Get a Surface
-//    //    //  we can use for input and wrap it with a class that handles the EGL work.
-//    //    // 
-//    //    //  If you want to have two EGL contexts -- one for display, one for recording --
-//    //    //  you will likely want to defer instantiation of CodecInputSurface until after the
-//    //    //  "display" EGL context is created, then modify the eglCreateContext call to
-//    //    //  take eglGetCurrentContext() as the share_context argument.
-//    //    this.mEncoder = MediaCodec.CreateEncoderByType(MIME_TYPE);
-//    //    this.mEncoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
-//    //    //this.mInputSurface = new CodecInputSurface(this.mEncoder.CreateInputSurface());
-//    //    this.mEncoder.Start();
-//    //    //  Output filename.  Ideally this would use Context.getFilesDir() rather than a
-//    //    //  hard-coded output directory.
-//    //    //String outputPath = new File(OUTPUT_DIR, ("test."+ (this.mWidth + ("x"+ (this.mHeight + ".mp4"))))).ToString();
-//    //    //Log.d(TAG, ("output file is " + outputPath));
-//    //    //  Create a MediaMuxer.  We can't add the video track and start() the muxer here,
-//    //    //  because our MediaFormat doesn't have the Magic Goodies.  These can only be
-//    //    //  obtained from the encoder after it has started processing data.
-//    //    // 
-//    //    //  We're not actually interested in multiplexing audio.  We just want to convert
-//    //    //  the raw H.264 elementary stream we get from MediaCodec into a .mp4 file.
-//    //    try
-//    //    {
-//    //        this.mMuxer = new MediaMuxer(_outputPath, MuxerOutputType.Mpeg4);
-//    //    }
-//    //    catch (IOException ioe)
-//    //    {
-//    //        throw new RuntimeException("MediaMuxer creation failed", ioe);
-//    //    }
+//        //  Create a MediaCodec encoder, and configure it with our format.  Get a Surface
+//        //  we can use for input and wrap it with a class that handles the EGL work.
+//        // 
+//        //  If you want to have two EGL contexts -- one for display, one for recording --
+//        //  you will likely want to defer instantiation of CodecInputSurface until after the
+//        //  "display" EGL context is created, then modify the eglCreateContext call to
+//        //  take eglGetCurrentContext() as the share_context argument.
+//        this.mEncoder = MediaCodec.CreateEncoderByType(MIME_TYPE);
+//        this.mEncoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
+//        //this.mInputSurface = new CodecInputSurface(this.mEncoder.CreateInputSurface());
+//        this.mEncoder.Start();
+//        //  Output filename.  Ideally this would use Context.getFilesDir() rather than a
+//        //  hard-coded output directory.
+//        //String outputPath = new File(OUTPUT_DIR, ("test."+ (this.mWidth + ("x"+ (this.mHeight + ".mp4"))))).ToString();
+//        //Log.d(TAG, ("output file is " + outputPath));
+//        //  Create a MediaMuxer.  We can't add the video track and start() the muxer here,
+//        //  because our MediaFormat doesn't have the Magic Goodies.  These can only be
+//        //  obtained from the encoder after it has started processing data.
+//        // 
+//        //  We're not actually interested in multiplexing audio.  We just want to convert
+//        //  the raw H.264 elementary stream we get from MediaCodec into a .mp4 file.
+//        try
+//        {
+//            this.mMuxer = new MediaMuxer(_outputPath, MuxerOutputType.Mpeg4);
+//        }
+//        catch (IOException ioe)
+//        {
+//            throw new RuntimeException("MediaMuxer creation failed", ioe);
+//        }
 
-//    //    this.mTrackIndex = -1;
-//    //    this.mMuxerStarted = false;
-//    //}
+//        this.mTrackIndex = -1;
+//        this.mMuxerStarted = false;
+//    }
 
 //    //private void releaseEncoder()
 //    //{

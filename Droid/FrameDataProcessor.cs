@@ -157,11 +157,14 @@ namespace GrowPea.Droid
 
             try
             {
-                var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, outputfile.AbsolutePath);
-                encoder.EncodeAll(imagesinfo);
+                //var encoder = new Encoder(_frameWidth, _frameHeight, bitRate, outputfile.AbsolutePath);
+                //encoder.EncodeAll(imagesinfo);
 
                 //var encoder = new EncodeAndMux();
                 //encoder.StartSHit(imagesinfo, _frameWidth,_frameHeight, bitRate);
+
+                var encoder = new EncoderMuxer();
+                encoder.EncodeVideoToMp4(imagesinfo);
             }
             catch(Exception e)
             {
