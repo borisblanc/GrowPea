@@ -282,7 +282,10 @@ namespace GrowPea.Droid
                                 int[] argb = new int[b.Width * b.Height];
 
                                 b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+
                                 encodeYUV420SP(yuv, argb, b.Width, b.Height);
+                                //yuv = swapYV12toI420(yuv, b.Width, b.Height);
+
 
                                 b.Recycle();
                                 inputBuf.Put(yuv);
@@ -364,8 +367,8 @@ namespace GrowPea.Droid
                         }
 
                         //  adjust the ByteBuffer values to match BufferInfo (not needed?)
-                        encodedData.Position(mBufferInfo.Offset);
-                        encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
+                        //encodedData.Position(mBufferInfo.Offset);
+                        //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
                         _Muxer.WriteSampleData(_TrackIndex, encodedData, mBufferInfo);
                         Log.Info(TAG, string.Format("{0} bytes to muxer", mBufferInfo.Size));
@@ -458,13 +461,25 @@ namespace GrowPea.Droid
         return new YuvImage(barray, ImageFormatType.Nv21, _Width, _Height, null);
     }
 
+    public byte[] swapYV12toI420(byte[] yv12bytes, int width, int height)
+    {
+        byte[] i420bytes = new byte[yv12bytes.Length];
+        for (int i = 0; i < width * height; i++)
+            i420bytes[i] = yv12bytes[i];
+        for (int i = width * height; i < width * height + (width / 2 * height / 2); i++)
+            i420bytes[i] = yv12bytes[i + (width / 2 * height / 2)];
+        for (int i = width * height + (width / 2 * height / 2); i < width * height + 2 * (width / 2 * height / 2); i++)
+            i420bytes[i] = yv12bytes[i - (width / 2 * height / 2)];
+        return i420bytes;
+    }
 
-    //private static long computePresentationTimeNsec(int frameIndex)
-    //{
-    //    long ONE_BILLION = 1000000000;
-    //    return (frameIndex * (ONE_BILLION / FRAME_RATE));
-    //}
-    
+
+        //private static long computePresentationTimeNsec(int frameIndex)
+        //{
+        //    long ONE_BILLION = 1000000000;
+        //    return (frameIndex * (ONE_BILLION / FRAME_RATE));
+        //}
+
     }
 
 

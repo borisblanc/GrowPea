@@ -55,9 +55,9 @@ namespace GrowPea.Droid
                 //if 640 by 480 use 4000000 bitrate
                 //if 320 by 240 use 2000000 bitrate
                 if (_frameWidth == 640 && _frameHeight == 480)
-                    _bitRate = 4000000;
+                    _bitRate = 6000000;
                 else if (_frameWidth == 320 && _frameHeight == 240)
-                    _bitRate = 2000000;
+                    _bitRate = 3000000;
                 else
                 {
                     Log.Error(TAG, "Uknown bitrate calculation");
@@ -183,8 +183,13 @@ namespace GrowPea.Droid
 
             try
             {
-                var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
+                //var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
+                //encoder.EncodeVideoToMp4();
+
+
+                var encoder = new SurfaceEncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
                 encoder.EncodeVideoToMp4();
+                
             }
             catch(Exception e)
             {
