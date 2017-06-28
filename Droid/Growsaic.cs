@@ -160,8 +160,13 @@ namespace GrowPea.Droid
                 toast.Show();
             });
 
-            FrameDataProcessor fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight);
-            bool result = await fdp.BeginProcessingFrames();
+            bool result= false;
+            if (myFaceDetector._allFrameData.Count >= 100) //need atleast 100 frames or don't bother, todo tell user video was too short and try again
+            {
+                FrameDataProcessor fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight);
+                result = await fdp.BeginProcessingFrames();
+            }
+
 
             if (result)
             {

@@ -111,7 +111,7 @@ namespace GrowPea.Droid
 
                     }
 
-                    if (ALLFaces.Count > 0)
+                    if (ALLFaces.Count >= 100)
                     {
                         var frameoffsetMinusStart = 10; //start offset
                         var frameboundPlusEnd = 30; //count of frames
@@ -122,11 +122,15 @@ namespace GrowPea.Droid
                             .Where(f => f.Value.Iuse == maxIuse)
                             .First(f => f.Index >= frameoffsetMinusStart &&
                                         f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)); //offsets take into account array size so best face is within bounds
-                        lock (obj
-                            )
+                        lock (obj)
                         {
+                            
                             bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
                         }
+                    }
+                    else
+                    {
+                        
                     }
                 }
             }

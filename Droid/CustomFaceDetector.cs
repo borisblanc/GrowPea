@@ -47,7 +47,7 @@ namespace GrowPea.Droid
         {
             if (isRecording)
             {
-                if (_allFrameData.Count > 10000) //cancel recording if too many frames are collected and notify subscribers
+                if (_allFrameData.Count > 5000) //cancel recording if too many frames are collected and notify subscribers
                 {
                     isRecording = false;
                 }

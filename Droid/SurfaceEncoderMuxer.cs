@@ -145,10 +145,10 @@ namespace GrowPea.Droid
 
                     drainEncoder(false);
                     // Generate a new frame of input.
-                    //Bitmap b = GetBitmap(_ByteBuffers[i]);
+                    Bitmap b = GetBitmap(_ByteBuffers[i]);
                     //encodeFrame(b);
                     //generateSurfaceFrame(i);
-                    renderbuffer(_ByteBuffers[i]);
+                    renderbuffer(b);
                     mInputSurface.setPresentationTime(computePresentationTimeNsec(i));
 
                     // Submit it to the encoder.  The eglSwapBuffers call will block if the input
@@ -309,8 +309,8 @@ namespace GrowPea.Droid
         {
             int TIMEOUT_USEC = 10000;
 
-            bool inputDone = false;
-            int frameIndex = 0;
+            //bool inputDone = false;
+            //int frameIndex = 0;
             try
             {
                 if (endofstream)
@@ -462,9 +462,9 @@ namespace GrowPea.Droid
             int textureHeight = bitmap.Height;
 
             GLES20.GlBindTexture(GLES20.GlTexture2d, textures[0]);
-            var error1 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
+            //var error1 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
             GLUtils.TexImage2D(GLES20.GlTexture2d, 0, bitmap, 0);
-            var error2 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
+            //var error2 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
 
             GLES20.GlTexParameteri(GLES20.GlTexture2d, GLES20.GlTextureMinFilter, GLES20.GlLinear);
             GLES20.GlTexParameteri(GLES20.GlTexture2d, GLES20.GlTextureMagFilter, GLES20.GlNearest);
@@ -552,20 +552,20 @@ namespace GrowPea.Droid
             return new YuvImage(barray, ImageFormatType.Nv21, _Width, _Height, null);
         }
 
-        private void renderbuffer(ByteBuffer bBuffer)
+        private void renderbuffer(Bitmap bitmap)
         {
-            int GL_COLOR_BUFFER_BIT = 0;
-            
-            
+            //int GL_COLOR_BUFFER_BIT = 0;
+
+
             //GL.Clear(GL_COLOR_BUFFER_BIT);
-            Android.Opengl.GLES10.GlClear(GL_COLOR_BUFFER_BIT);
+            //Android.Opengl.GLES10.GlClear(GL_COLOR_BUFFER_BIT);
 
             //glPushMatrix(); //Start phase
-            Android.Opengl.GLES10.GlPushMatrix();
+            //Android.Opengl.GLES10.GlPushMatrix();
 
 
             //glOrtho(0, 720, 480, 0, -1, 1); //Set the matrix
-            Android.Opengl.GLES10.GlOrthof(0, 720, 480, 0, -1, 1);
+            //Android.Opengl.GLES10.GlOrthof(0, 720, 480, 0, -1, 1);
 
 
             /*                        Draw                      */
@@ -574,8 +574,8 @@ namespace GrowPea.Droid
             //int x_pos = 124;
             //int y_pos = 124;
 
-            GLuint mTextureWidth = 124;
-            GLuint mTextureHeight = 124;
+            //GLuint mTextureWidth = 124;
+            //GLuint mTextureHeight = 124;
 
             //SDL_Surface* image = IMG_Load(image_path);
 
@@ -586,17 +586,17 @@ namespace GrowPea.Droid
             //    std::cout << "Error Cannot load image";
             //}
 
-            float x = 450.0f;
-            float y = 150.0f;
-            float width = 100.0f;
-            float height = 100.0f;
+            //float x = 450.0f;
+            //float y = 150.0f;
+            //float width = 100.0f;
+            //float height = 100.0f;
 
-            float iheight = 124.0f;
-            float iwidth = 124.0f;
+            //float iheight = 124.0f;
+            //float iwidth = 124.0f;
 
 
             //glEnable(GL_TEXTURE_2D);
-            GLES20.GlEnable(GLES20.GlTexture2d);
+            //GLES20.GlEnable(GLES20.GlTexture2d);
 
             //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             //GLES20.GlPixelStorei(GLES20.GlUnpackAlignment, 1);
@@ -604,33 +604,33 @@ namespace GrowPea.Droid
             //GLuint textures;
             //glGenTextures(1, &textures); //Number of textures stored in array name specified
 
-            Java.Nio.IntBuffer textures = IntBuffer.Allocate(30);
-            GLint texture = 0;
+            //Java.Nio.IntBuffer textures = IntBuffer.Allocate(30);
+            //GLint texture = 0;
             //glGenTextures(1, &textures); //Number of textures stored in array name specified
-            GLES20.GlGenTextures(1, textures);
+            //GLES20.GlGenTextures(1, textures);
 
             //glBindTexture(GL_TEXTURE_2D, textures);
-            GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
+            //GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
 
             //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMinFilter, GLES20.GlLinear);
-            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMagFilter, GLES20.GlLinear);
-            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapS, GLES20.GlClampToEdge);
-            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapT, GLES20.GlClampToEdge);
+            //GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMinFilter, GLES20.GlLinear);
+            //GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMagFilter, GLES20.GlLinear);
+            //GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapS, GLES20.GlClampToEdge);
+            //GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapT, GLES20.GlClampToEdge);
 
             // Map the surface to the texture in video memory
             //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 124, 124, 0, GL_RGB, GL_UNSIGNED_BYTE, image->pixels); //GL_BITMAP
-            GLES20.GlTexImage2D(GLES20.GlTexture2d, 0, GLES20.GlRgb, 124, 124, 0, GLES20.GlRgb, GLES20.GlUnsignedByte, bBuffer);
+            //GLES20.GlTexImage2D(GLES20.GlTexture2d, 0, GLES20.GlRgb, 124, 124, 0, GLES20.GlRgb, GLES20.GlUnsignedByte, bBuffer);
 
             //SDL_FreeSurface(image);
 
 
             //glBindTexture(GL_TEXTURE_2D, textures);
-            GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
+            //GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
 
             //Render texture quad
             //glBegin(GL_QUADS);
@@ -644,11 +644,28 @@ namespace GrowPea.Droid
 
             //glDisable(GL_TEXTURE_2D);
 
-            GLES20.GlDisable(GLES20.GlTexture2d);
+            //GLES20.GlDisable(GLES20.GlTexture2d);
 
 
-            //glPopMatrix(); //End rendering phase
-            Android.Opengl.GLES10.GlPopMatrix();
+            ////glPopMatrix(); //End rendering phase
+            //Android.Opengl.GLES10.GlPopMatrix();
+
+            IntBuffer framebuff = IntBuffer.Allocate(1);
+
+            int[] textures = new int[1];
+            GLES30.GlBindTexture(GLES30.GlTexture2d, textures[0]);
+            
+            GLUtils.TexImage2D(GLES30.GlTexture2d, 0, bitmap, 0);
+
+            GLint readbold = 0;
+
+            GLuint readFboId = 0;
+            GLES30.GlGenFramebuffers(1, framebuff);
+            GLES30.GlBindFramebuffer(GLES30.GlReadFramebuffer, readbold);
+            GLES30.GlFramebufferTexture2D(GLES30.GlReadFramebuffer, GLES30.GlColorAttachment0, GLES30.GlTexture2d, textures[0], 0);
+            GLES30.GlBlitFramebuffer(0, 0, bitmap.Width, bitmap.Height, 0, 0, bitmap.Width, bitmap.Height, GLES30.GlColorBufferBit, GLES30.GlLinear);
+            GLES30.GlBindFramebuffer(GLES30.GlReadFramebuffer, 0);
+            GLES30.GlDeleteFramebuffers(1, framebuff);
         }
 
 
