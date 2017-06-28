@@ -22,9 +22,7 @@ using Android.Gms.Vision;
 using Android.Graphics;
 using Java.IO;
 using Java.Util;
-using Org.Opencv.Core;
-using Org.Opencv.Highgui;
-using Org.Opencv.Imgproc;
+
 
 
 namespace GrowPea.Droid

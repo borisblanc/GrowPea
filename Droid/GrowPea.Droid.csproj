@@ -91,6 +91,7 @@
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SurfaceEncoderMuxer.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -111,12 +112,6 @@
     <AndroidResource Include="Resources\mipmap-xhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\Icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Xamarin.Android-OpenCV4Android-master\Opencv4Android\OpencvBinding\OpencvBinding.csproj">
-      <Project>{d51e9471-c935-4024-b30d-6e2dba3cf9e2}</Project>
-      <Name>OpencvBinding</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Cheese.png" />

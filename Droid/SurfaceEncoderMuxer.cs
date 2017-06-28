@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Android.Content;
+using Android.Content.Res;
 using Android.Graphics;
 using Android.Media;
 using Android.Opengl;
@@ -17,6 +18,23 @@ using Exception = System.Exception;
 using File = Java.IO.File;
 using IOException = Java.IO.IOException;
 using String = System.String;
+
+using GLbitfield = System.UInt32;
+using GLboolean = System.Boolean;
+using GLbyte = System.SByte;
+using GLclampf = System.Single;
+using GLdouble = System.Double;
+using GLenum = System.UInt32;
+using GLfloat = System.Single;
+using GLint = System.Int32;
+using GLshort = System.Int16;
+using GLsizei = System.Int32;
+using GLubyte = System.Byte;
+using GLuint = System.UInt32;
+using GLushort = System.UInt16;
+using GLvoid = System.IntPtr;
+
+
 
 // 20131106: removed hard-coded "/sdcard"
 // 20131205: added alpha to EGLConfig
@@ -37,7 +55,7 @@ namespace GrowPea.Droid
         private static String MIME_TYPE = "video/avc";
 
         //  H.264 Advanced Video Coding
-        private static int FRAME_RATE = 10;
+        private static int FRAME_RATE = 15;
 
         //  15fps
         private static int IFRAME_INTERVAL = 10;
@@ -54,7 +72,7 @@ namespace GrowPea.Droid
         "}\n";
 
         //  10 seconds between I-frames
-        //private static int NUM_FRAMES = 30;
+        private static int NUM_FRAMES = 30;
 
         //  two seconds of video
         //  RGB color values for generated frames
@@ -111,6 +129,10 @@ namespace GrowPea.Droid
 
         public void EncodeVideoToMp4()
         {
+            //_Width = 320;
+            //_Height = 240;
+            //_BitRate = 2000000;
+
             try
             {
                 PrepareEncoder();
@@ -122,9 +144,9 @@ namespace GrowPea.Droid
 
                     drainEncoder(false);
                     // Generate a new frame of input.
-                    //Bitmap b = GetBitmap(_ByteBuffers[i]);
-                    //encodeFrame(b);
-                    generateSurfaceFrame(i);
+                    Bitmap b = GetBitmap(_ByteBuffers[i]);
+                    encodeFrame(b);
+                    //generateSurfaceFrame(i);
                     mInputSurface.setPresentationTime(computePresentationTimeNsec(i));
 
                     // Submit it to the encoder.  The eglSwapBuffers call will block if the input
@@ -157,7 +179,7 @@ namespace GrowPea.Droid
             mBufferInfo = new MediaCodec.BufferInfo();
             MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, _Width, _Height);
 
-            MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
+            //MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
 
             int colorFormat = (int)MediaCodecInfo.CodecCapabilities.COLORFormatSurface;
 
@@ -167,7 +189,7 @@ namespace GrowPea.Droid
             format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
 
 
-            _Encoder = MediaCodec.CreateByCodecName(codecInfo.Name);
+            _Encoder = MediaCodec.CreateEncoderByType(MIME_TYPE);
             _Encoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
             mInputSurface = new CodecInputSurface(_Encoder.CreateInputSurface());
             _Encoder.Start();
@@ -189,29 +211,29 @@ namespace GrowPea.Droid
             _MuxerStarted = false;
         }
 
-        private static MediaCodecInfo selectCodec(String mimeType)
-        {
-            int numCodecs = MediaCodecList.CodecCount;
-            for (int i = 0; i < numCodecs; i++)
-            {
-                MediaCodecInfo codecInfo = MediaCodecList.GetCodecInfoAt(i);
-                if (!codecInfo.IsEncoder)
-                {
-                    continue;
-                }
+        //private static MediaCodecInfo selectCodec(String mimeType)
+        //{
+        //    int numCodecs = MediaCodecList.CodecCount;
+        //    for (int i = 0; i < numCodecs; i++)
+        //    {
+        //        MediaCodecInfo codecInfo = MediaCodecList.GetCodecInfoAt(i);
+        //        if (!codecInfo.IsEncoder)
+        //        {
+        //            continue;
+        //        }
 
-                String[] types = codecInfo.GetSupportedTypes();
-                for (int j = 0; (j < types.Length); j++)
-                {
-                    if (types[j].ToLower().Equals(mimeType.ToLower()))
-                    {
-                        return codecInfo;
-                    }
+        //        String[] types = codecInfo.GetSupportedTypes();
+        //        for (int j = 0; (j < types.Length); j++)
+        //        {
+        //            if (types[j].ToLower().Equals(mimeType.ToLower()))
+        //            {
+        //                return codecInfo;
+        //            }
 
-                }
-            }
-            return null;
-        }
+        //        }
+        //    }
+        //    return null;
+        //}
 
         private static long computePresentationTimeNsec(int frameIndex)
         {
@@ -219,22 +241,22 @@ namespace GrowPea.Droid
             return (frameIndex * (ONE_BILLION / FRAME_RATE));
         }
 
-        private static int selectColorFormat(MediaCodecInfo codecInfo, String mimeType)
-        {
-            MediaCodecInfo.CodecCapabilities capabilities = codecInfo.GetCapabilitiesForType(mimeType);
-            for (int i = 0; (i < capabilities.ColorFormats.Count); i++)
-            {
-                int colorFormat = capabilities.ColorFormats[i];
-                if (isRecognizedFormat(colorFormat))
-                {
-                    return colorFormat;
-                }
+        //private static int selectColorFormat(MediaCodecInfo codecInfo, String mimeType)
+        //{
+        //    MediaCodecInfo.CodecCapabilities capabilities = codecInfo.GetCapabilitiesForType(mimeType);
+        //    for (int i = 0; (i < capabilities.ColorFormats.Count); i++)
+        //    {
+        //        int colorFormat = capabilities.ColorFormats[i];
+        //        if (isRecognizedFormat(colorFormat))
+        //        {
+        //            return colorFormat;
+        //        }
 
-            }
+        //    }
 
-            Log.Warn(TAG, string.Format("couldn\'t find a good color format for codec {0} and mime {1}", codecInfo.Name, mimeType));
-            return 0;
-        }
+        //    Log.Warn(TAG, string.Format("couldn\'t find a good color format for codec {0} and mime {1}", codecInfo.Name, mimeType));
+        //    return 0;
+        //}
 
         private static bool isRecognizedFormat(int colorFormat)
         {
@@ -295,18 +317,17 @@ namespace GrowPea.Droid
                     _Encoder.SignalEndOfInputStream();
                 }
 
+                ByteBuffer[] encoderOutputBuffers = _Encoder.GetOutputBuffers();
                 while (true)
                 {
-                    ByteBuffer[] encoderOutputBuffers = _Encoder.GetOutputBuffers();
-
                     int encoderStatus = _Encoder.DequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
 
                     if (encoderStatus == (int)MediaCodecInfoState.TryAgainLater)
                     {
-                        //if (!endofstream)
-                        //{
-                        //    break; // out of while
-                        //}
+                        if (!endofstream)
+                        {
+                            break; // out of while
+                        }
                         Log.Info(TAG, "no output available, spinning to await EOS");
                     }
                     else if (encoderStatus == (int)MediaCodecInfoState.OutputBuffersChanged)
@@ -421,6 +442,7 @@ namespace GrowPea.Droid
 
                 // render the texture here?
             }
+
             finally
             {
                 unloadTexture(textureId);
@@ -432,12 +454,15 @@ namespace GrowPea.Droid
         {
             int[] textures = new int[1];
             GLES20.GlGenTextures(1, textures, 0);
+            var error3 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
 
             int textureWidth = bitmap.Width;
             int textureHeight = bitmap.Height;
 
             GLES20.GlBindTexture(GLES20.GlTexture2d, textures[0]);
+            var error1 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
             GLUtils.TexImage2D(GLES20.GlTexture2d, 0, bitmap, 0);
+            var error2 = GLUtils.GetEGLErrorString(GLES20.GlNoError);
 
             GLES20.GlTexParameteri(GLES20.GlTexture2d, GLES20.GlTextureMinFilter, GLES20.GlLinear);
             GLES20.GlTexParameteri(GLES20.GlTexture2d, GLES20.GlTextureMagFilter, GLES20.GlNearest);
@@ -525,6 +550,89 @@ namespace GrowPea.Droid
             return new YuvImage(barray, ImageFormatType.Nv21, _Width, _Height, null);
         }
 
+        //private void renderbitmap(Bitmap b)
+        //{
+        //    int GL_COLOR_BUFFER_BIT = 0;
+        //    //GL.Clear(GL_COLOR_BUFFER_BIT);
+
+
+        //    //glClear(GL_COLOR_BUFFER_BIT);
+        //    //glPushMatrix(); //Start phase
+        //    GL.PushMatrix();
+            
+
+        //    //glOrtho(0, 720, 480, 0, -1, 1); //Set the matrix
+
+        //    Android.Opengl.GLES10.GlOrthof(0, 720, 480, 0, -1, 1);
+
+
+        //    /*                        Draw                      */
+
+        //    var image_path = "helloworld.bmp";
+        //    int x_pos = 124;
+        //    int y_pos = 124;
+
+        //    GLuint mTextureWidth = 124;
+        //    GLuint mTextureHeight = 124;
+
+        //    //SDL_Surface* image = IMG_Load(image_path);
+
+
+
+        //    //if (!image)
+        //    //{
+        //    //    std::cout << "Error Cannot load image";
+        //    //}
+
+        //    float x = 450.0f;
+        //    float y = 150.0f;
+        //    float width = 100.0f;
+        //    float height = 100.0f;
+
+        //    float iheight = 124.0f;
+        //    float iwidth = 124.0f;
+
+
+        //    //glEnable(GL_TEXTURE_2D);
+        //    //GL.Enable(GLES20.GlTexture2d);
+        //    GLES20.GlEnable(GLES20.GlTexture2d);
+
+        //    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        //    GLES20.GlPixelStorei(GLES20.GlUnpackAlignment, 1);
+        //    GLuint textures;
+
+        //    //glGenTextures(1, &textures); //Number of textures stored in array name specified
+        //    GLES20.GlGenTextures(1, textures);
+
+        //    //glBindTexture(GL_TEXTURE_2D, textures);
+
+
+        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        //    // Map the surface to the texture in video memory
+        //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 124, 124, 0, GL_RGB, GL_UNSIGNED_BYTE, image->pixels); //GL_BITMAP
+        //    SDL_FreeSurface(image);
+
+
+        //    glBindTexture(GL_TEXTURE_2D, textures);
+
+        //    //Render texture quad
+        //    glBegin(GL_QUADS);
+        //    glTexCoord2f(0.f, 0.f); glVertex2f(x, y); //Bottom left
+        //    glTexCoord2f(1.f, 0.f); glVertex2f(x + iwidth, y); //Bottom right
+        //    glTexCoord2f(1.f, 1.f); glVertex2f(x + iwidth, y + iheight); //Top right
+        //    glTexCoord2f(0.f, 1.f); glVertex2f(x, y + iheight); //Top left
+        //    glEnd();
+
+        //    glDisable(GL_TEXTURE_2D);
+
+
+        //    glPopMatrix(); //End rendering phase
+        //}
+
 
     }
 
@@ -541,14 +649,10 @@ namespace GrowPea.Droid
     public class CodecInputSurface
     {
 
-        private const int EGL_RECORDABLE_ANDROID = 12610;
-
+        private const int EGL_RECORDABLE_ANDROID = 0x3142;
         private EGLDisplay mEGLDisplay = EGL14.EglNoDisplay;
-
         private EGLContext mEGLContext = EGL14.EglNoContext;
-
         private EGLSurface mEGLSurface = EGL14.EglNoSurface;
-
         private Surface mSurface;
 
         public CodecInputSurface(Surface surface)
@@ -563,6 +667,9 @@ namespace GrowPea.Droid
 
         }
 
+        /**
+         * Prepares EGL.  We want a GLES 2.0 context and a surface that supports recording.
+         */
         private void eglSetup()
         {
             this.mEGLDisplay = EGL14.EglGetDisplay(EGL14.EglDefaultDisplay);
@@ -715,5 +822,11 @@ namespace GrowPea.Droid
 
 
     }
+
+
+
+
+
+    
 
 }

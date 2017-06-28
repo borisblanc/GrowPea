@@ -8,7 +8,4 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>GrowPea</Import_RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
-  </ItemGroup>
 </Project>
