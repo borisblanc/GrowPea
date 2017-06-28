@@ -10,6 +10,7 @@ using Android.Opengl;
 using Android.Test;
 using Android.Util;
 using Android.Views;
+using Java.IO;
 using Java.Lang;
 using Java.Nio;
 using Javax.Microedition.Khronos.Opengles;
@@ -144,9 +145,10 @@ namespace GrowPea.Droid
 
                     drainEncoder(false);
                     // Generate a new frame of input.
-                    Bitmap b = GetBitmap(_ByteBuffers[i]);
-                    encodeFrame(b);
+                    //Bitmap b = GetBitmap(_ByteBuffers[i]);
+                    //encodeFrame(b);
                     //generateSurfaceFrame(i);
+                    renderbuffer(_ByteBuffers[i]);
                     mInputSurface.setPresentationTime(computePresentationTimeNsec(i));
 
                     // Submit it to the encoder.  The eglSwapBuffers call will block if the input
@@ -550,88 +552,104 @@ namespace GrowPea.Droid
             return new YuvImage(barray, ImageFormatType.Nv21, _Width, _Height, null);
         }
 
-        //private void renderbitmap(Bitmap b)
-        //{
-        //    int GL_COLOR_BUFFER_BIT = 0;
-        //    //GL.Clear(GL_COLOR_BUFFER_BIT);
-
-
-        //    //glClear(GL_COLOR_BUFFER_BIT);
-        //    //glPushMatrix(); //Start phase
-        //    GL.PushMatrix();
+        private void renderbuffer(ByteBuffer bBuffer)
+        {
+            int GL_COLOR_BUFFER_BIT = 0;
             
+            
+            //GL.Clear(GL_COLOR_BUFFER_BIT);
+            Android.Opengl.GLES10.GlClear(GL_COLOR_BUFFER_BIT);
 
-        //    //glOrtho(0, 720, 480, 0, -1, 1); //Set the matrix
-
-        //    Android.Opengl.GLES10.GlOrthof(0, 720, 480, 0, -1, 1);
-
-
-        //    /*                        Draw                      */
-
-        //    var image_path = "helloworld.bmp";
-        //    int x_pos = 124;
-        //    int y_pos = 124;
-
-        //    GLuint mTextureWidth = 124;
-        //    GLuint mTextureHeight = 124;
-
-        //    //SDL_Surface* image = IMG_Load(image_path);
+            //glPushMatrix(); //Start phase
+            Android.Opengl.GLES10.GlPushMatrix();
 
 
-
-        //    //if (!image)
-        //    //{
-        //    //    std::cout << "Error Cannot load image";
-        //    //}
-
-        //    float x = 450.0f;
-        //    float y = 150.0f;
-        //    float width = 100.0f;
-        //    float height = 100.0f;
-
-        //    float iheight = 124.0f;
-        //    float iwidth = 124.0f;
+            //glOrtho(0, 720, 480, 0, -1, 1); //Set the matrix
+            Android.Opengl.GLES10.GlOrthof(0, 720, 480, 0, -1, 1);
 
 
-        //    //glEnable(GL_TEXTURE_2D);
-        //    //GL.Enable(GLES20.GlTexture2d);
-        //    GLES20.GlEnable(GLES20.GlTexture2d);
+            /*                        Draw                      */
 
-        //    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        //    GLES20.GlPixelStorei(GLES20.GlUnpackAlignment, 1);
-        //    GLuint textures;
+            //var image_path = "helloworld.bmp";
+            //int x_pos = 124;
+            //int y_pos = 124;
 
-        //    //glGenTextures(1, &textures); //Number of textures stored in array name specified
-        //    GLES20.GlGenTextures(1, textures);
+            GLuint mTextureWidth = 124;
+            GLuint mTextureHeight = 124;
 
-        //    //glBindTexture(GL_TEXTURE_2D, textures);
+            //SDL_Surface* image = IMG_Load(image_path);
 
 
-        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        //    // Map the surface to the texture in video memory
-        //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 124, 124, 0, GL_RGB, GL_UNSIGNED_BYTE, image->pixels); //GL_BITMAP
-        //    SDL_FreeSurface(image);
+            //if (!image)
+            //{
+            //    std::cout << "Error Cannot load image";
+            //}
 
+            float x = 450.0f;
+            float y = 150.0f;
+            float width = 100.0f;
+            float height = 100.0f;
 
-        //    glBindTexture(GL_TEXTURE_2D, textures);
-
-        //    //Render texture quad
-        //    glBegin(GL_QUADS);
-        //    glTexCoord2f(0.f, 0.f); glVertex2f(x, y); //Bottom left
-        //    glTexCoord2f(1.f, 0.f); glVertex2f(x + iwidth, y); //Bottom right
-        //    glTexCoord2f(1.f, 1.f); glVertex2f(x + iwidth, y + iheight); //Top right
-        //    glTexCoord2f(0.f, 1.f); glVertex2f(x, y + iheight); //Top left
-        //    glEnd();
-
-        //    glDisable(GL_TEXTURE_2D);
+            float iheight = 124.0f;
+            float iwidth = 124.0f;
 
 
-        //    glPopMatrix(); //End rendering phase
-        //}
+            //glEnable(GL_TEXTURE_2D);
+            GLES20.GlEnable(GLES20.GlTexture2d);
+
+            //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            //GLES20.GlPixelStorei(GLES20.GlUnpackAlignment, 1);
+
+            //GLuint textures;
+            //glGenTextures(1, &textures); //Number of textures stored in array name specified
+
+            Java.Nio.IntBuffer textures = IntBuffer.Allocate(30);
+            GLint texture = 0;
+            //glGenTextures(1, &textures); //Number of textures stored in array name specified
+            GLES20.GlGenTextures(1, textures);
+
+            //glBindTexture(GL_TEXTURE_2D, textures);
+            GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
+
+            //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMinFilter, GLES20.GlLinear);
+            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureMagFilter, GLES20.GlLinear);
+            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapS, GLES20.GlClampToEdge);
+            GLES20.GlTexParameterf(GLES20.GlTexture2d, GLES20.GlTextureWrapT, GLES20.GlClampToEdge);
+
+            // Map the surface to the texture in video memory
+            //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 124, 124, 0, GL_RGB, GL_UNSIGNED_BYTE, image->pixels); //GL_BITMAP
+            GLES20.GlTexImage2D(GLES20.GlTexture2d, 0, GLES20.GlRgb, 124, 124, 0, GLES20.GlRgb, GLES20.GlUnsignedByte, bBuffer);
+
+            //SDL_FreeSurface(image);
+
+
+            //glBindTexture(GL_TEXTURE_2D, textures);
+            GLES20.GlBindTexture(GLES20.GlTexture2d, texture);
+
+            //Render texture quad
+            //glBegin(GL_QUADS);
+            //glTexCoord2f(0.f, 0.f); glVertex2f(x, y); //Bottom left
+            //glTexCoord2f(1.f, 0.f); glVertex2f(x + iwidth, y); //Bottom right
+            //glTexCoord2f(1.f, 1.f); glVertex2f(x + iwidth, y + iheight); //Top right
+            //glTexCoord2f(0.f, 1.f); glVertex2f(x, y + iheight); //Top left
+            //glEnd();
+            //nope ;) https://stackoverflow.com/questions/6408202/how-do-i-replace-glbegin-and-related-functions-in-opengl-es-2-0
+
+
+            //glDisable(GL_TEXTURE_2D);
+
+            GLES20.GlDisable(GLES20.GlTexture2d);
+
+
+            //glPopMatrix(); //End rendering phase
+            Android.Opengl.GLES10.GlPopMatrix();
+        }
 
 
     }
