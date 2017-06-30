@@ -46,6 +46,9 @@ namespace GrowPea.Droid
         private int pFrameHeight = 480;
 
         private Single Fps = 30.0f;
+        private int vidlengthseconds = 3;
+
+        private const int framemin = 300; //minimum number of frames needed to process this
 
 
         protected override void OnCreate(Bundle bundle)
@@ -154,35 +157,36 @@ namespace GrowPea.Droid
 
         private async void StartFrameProcessing()
         {
-            this.RunOnUiThread(() => //can only do this on UI thread
-            {
-                Toast toast = Toast.MakeText(this, "Processing Smiles :)!", ToastLength.Short);
-                toast.Show();
-            });
+
+            var toast = Toast.MakeText(this, "Processing Smiles :)!", ToastLength.Short);
+            toast.Show();
 
             bool result= false;
-            if (myFaceDetector._allFrameData.Count >= 100) //need atleast 100 frames or don't bother, todo tell user video was too short and try again
+
+            if (myFaceDetector._allFrameData.Count >= framemin) 
             {
-                FrameDataProcessor fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight);
+                var fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight, (int)Fps, vidlengthseconds);
                 result = await fdp.BeginProcessingFrames();
+            }
+            else
+            {
+                toast = Toast.MakeText(this, "Need a longer video!! Try Again.", ToastLength.Short);
+                toast.Show();
+                return;
             }
 
 
             if (result)
             {
-                this.RunOnUiThread(() => //can only do this on UI thread
-                {
-                    Toast toast = Toast.MakeText(this, "Smiles Processed:)!", ToastLength.Short);
-                    toast.Show();
-                });
+                toast = Toast.MakeText(this, "Smiles Processed:)!", ToastLength.Short);
+                toast.Show();
             }
             else
             {
-                this.RunOnUiThread(() => //can only do this on UI thread
-                {
-                    Toast toast = Toast.MakeText(this, "Error with Smiles:(!", ToastLength.Short);
-                    toast.Show();
-                });
+
+                toast = Toast.MakeText(this, "Error with Smiles:(!", ToastLength.Short);
+                toast.Show();
+
             }
         }
 

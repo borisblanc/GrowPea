@@ -21,6 +21,7 @@ using Android.Util;
 using Java.Nio;
 
 using System.IO;
+using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using Java.Lang;
 using Java.Security;
@@ -48,6 +49,10 @@ namespace GrowPea.Droid
 
         private int _bitRate;
 
+        private int _fps;
+
+        private int _vidlengthseconds;
+
         private int bitRate
         {
             get
@@ -70,11 +75,13 @@ namespace GrowPea.Droid
 
 
 
-        public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight)
+        public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds)
         {
             _allFrameData = allframedata;
             _frameWidth = framewidth;
             _frameHeight = frameheight;
+            _fps = fps;
+            _vidlengthseconds = vidlengthseconds;
             ALLFaces = new List<BmFace>();
         }
 
@@ -111,27 +118,26 @@ namespace GrowPea.Droid
 
                     }
 
-                    if (ALLFaces.Count >= 100)
+                    
+                    var frameoffsetMinusStart = GetStartOffset(); //start offset
+                    var frameboundPlusEnd = GetFrameTotal(); //count of frames
+                    float maxIuse;
+                    lock (obj)
                     {
-                        var frameoffsetMinusStart = 10; //start offset
-                        var frameboundPlusEnd = 30; //count of frames
-               
+                        var validframes = ALLFaces.Select((Value, Index) => new {Value, Index})
+                        .Where(f => f.Index >= frameoffsetMinusStart &&
+                                    f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)).ToList(); //offsets take into account array size so best face is within bounds
 
-                        var maxIuse = ALLFaces.Max(x => x.Iuse);
-                        var bestfaceIndex = ALLFaces.Select((Value, Index) => new {Value, Index})
-                            .Where(f => f.Value.Iuse == maxIuse)
-                            .First(f => f.Index >= frameoffsetMinusStart &&
-                                        f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)); //offsets take into account array size so best face is within bounds
-                        lock (obj)
-                        {
-                            
-                            bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - 10, 30); //range around bestface of 30 frames
-                        }
+
+                        maxIuse = validframes.Max(x => x.Value.Iuse);
+
+
+                        var bestfaceIndex = validframes.First(f => f.Value.Iuse == maxIuse);
+
+
+                        bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - frameoffsetMinusStart, frameboundPlusEnd); //range around bestface of _fps * _vidlengthseconds
                     }
-                    else
-                    {
-                        
-                    }
+                    
                 }
             }
             catch (Exception e)
@@ -154,6 +160,33 @@ namespace GrowPea.Droid
                 return true;
             else
                 return false;
+        }
+
+        //will depend on fps and length of video
+        private int GetStartOffset()
+        {
+            if (_vidlengthseconds == 3)
+            {
+                return _fps; //for 3 second vids fps will always equal start offset (eg.. we will always want one second worth of frames prior to best smile)
+            }
+            else if (_vidlengthseconds == 4)
+            {
+                return _fps; //for 4 second vids fps will always equal start offset (eg.. we will always want one second worth of frames prior to best smile)
+            }
+            else if (_vidlengthseconds == 5)
+            {
+                return _fps * 2; //for 4 second vids fps will always equal start offset * 2 (eg.. we will always want two seconds worth of frames prior to best smile)
+            }
+            else
+            {
+                return _fps;
+            }
+        }
+
+        //will depend on fps and length of video
+        private int GetFrameTotal()
+        {
+            return _fps * _vidlengthseconds; //total frames will always be frames per second * number of seconds
         }
 
         private Face GetSparseFace(SparseArray array)
@@ -187,13 +220,10 @@ namespace GrowPea.Droid
 
             try
             {
-                //var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
-                //encoder.EncodeVideoToMp4();
-
-
-                var encoder = new SurfaceEncoderMuxer(_frameWidth, _frameHeight, bitRate, outputfilepath, imagesinfo);
+                var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, _fps, outputfilepath, imagesinfo);
                 encoder.EncodeVideoToMp4();
-                
+
+
             }
             catch(Exception e)
             {

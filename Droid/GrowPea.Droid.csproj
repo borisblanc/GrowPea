@@ -81,16 +81,13 @@
     <Compile Include="Custom\CameraSourcePreview.cs" />
     <Compile Include="Custom\GraphicOverlay.cs" />
     <Compile Include="Encoder.cs" />
-    <Compile Include="EncodeAndMux.cs" />
-    <Compile Include="EncoderMux.cs" />
     <Compile Include="EncoderMuxer.cs" />
     <Compile Include="FaceGraphic.cs" />
     <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="Growsaic.cs" />
     <Compile Include="MainMenu.cs" />
-    <Compile Include="Resources\Resource.designer.cs" />
+    <Compile Include="Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SurfaceEncoderMuxer.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>

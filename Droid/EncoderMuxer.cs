@@ -5,6 +5,7 @@ using Android.Graphics;
 using Android.Media;
 using Android.Opengl;
 using Android.Test;
+using Android.Text.Format;
 using Android.Util;
 using Android.Views;
 using Java.Lang;
@@ -15,14 +16,16 @@ using File = Java.IO.File;
 using IOException = Java.IO.IOException;
 using String = System.String;
 
-// 20131106: removed hard-coded "/sdcard"
-// 20131205: added alpha to EGLConfig
-
+//See http://b.android.com/37769 for a discussion of input format pitfalls.
+//See http://b.android.com/37769 for a discussion of input format pitfalls.
+//See http://b.android.com/37769 for a discussion of input format pitfalls.
+//See http://b.android.com/37769 for a discussion of input format pitfalls.
 
 
 namespace GrowPea.Droid
 {
-    public class EncoderMuxer //: AndroidTestCase
+
+    public class EncoderMuxer 
     {
 
     private static String TAG = "EncoderMuxer";
@@ -34,27 +37,10 @@ namespace GrowPea.Droid
     private static String MIME_TYPE = "video/avc";
 
     //  H.264 Advanced Video Coding
-    private static int FRAME_RATE = 10;
+    private static int _frameRate;
 
     //  15fps
-    private static int IFRAME_INTERVAL = 10;
-
-    //  10 seconds between I-frames
-    //private static int NUM_FRAMES = 30;
-
-    //  two seconds of video
-    //  RGB color values for generated frames
-    private static int TEST_R0 = 0;
-
-    private static int TEST_G0 = 136;
-
-    private static int TEST_B0 = 0;
-
-    private static int TEST_R1 = 236;
-
-    private static int TEST_G1 = 50;
-
-    private static int TEST_B1 = 186;
+    private static int IFRAME_INTERVAL = 1;
 
     //  size of a frame, in pixels
     private int _Width = -1;
@@ -76,11 +62,15 @@ namespace GrowPea.Droid
     private bool _MuxerStarted;
 
     //  allocate one of these up front so we don't need to do it every time
-    private MediaCodec.BufferInfo mBufferInfo;
 
-    private List<ByteBuffer> _ByteBuffers;
+    private readonly List<ByteBuffer> _ByteBuffers;
 
-    public EncoderMuxer(int width, int height, int bitRate, string oFilePath, List<ByteBuffer> byteBuffers)
+    private static MediaCodecCapabilities _SelectedCodecColor;
+
+    private static ImageFormatType _CameraColorFormat = ImageFormatType.Nv21; //ImageFormatType NV21 or YV12 should be the image formats all Android cameras save under ?nv21 should always work i think?
+
+
+    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<ByteBuffer> byteBuffers)
     {
         if ((width % 16) != 0 || (height % 16) != 0)
         {
@@ -91,6 +81,7 @@ namespace GrowPea.Droid
         _BitRate = bitRate;
         _Filepath = oFilePath;
         _ByteBuffers = byteBuffers;
+        _frameRate = framerate;
     }
 
     public void EncodeVideoToMp4()
@@ -98,13 +89,7 @@ namespace GrowPea.Droid
         try
         {
             PrepareEncoder();
-            //  Feed any pending encoder output into the muxer.
             EncodeMux();
-            //  Submit it to the encoder.  The eglSwapBuffers call will block if the input
-            //  is full, which would be bad if it stayed full until we dequeued an output
-            //  buffer (which we can't do, since we're stuck here).  So long as we fully drain
-            //  the encoder before supplying additional input, the system guarantees that we
-            //  can supply another frame without blocking.
         }
         catch (Exception e)
         {
@@ -115,26 +100,32 @@ namespace GrowPea.Droid
             //  release encoder, muxer, and input Surface
             releaseEncoder();
         }
-
-    //  To test the result, open the file with MediaExtractor, and get the format.  Pass
-    //  that into the MediaCodec decoder configuration, along with a SurfaceTexture surface,
-    //  and examine the output with glReadPixels.
     }
 
     private void PrepareEncoder()
     {
-        mBufferInfo = new MediaCodec.BufferInfo();
-        MediaFormat format = MediaFormat.CreateVideoFormat(MIME_TYPE, _Width, _Height);
-
         MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
 
-        int colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
+        if (codecInfo == null)
+        {
+            return;
+        }
 
+        int colorFormat;
+        try
+        {
+            colorFormat = selectColorFormat(codecInfo, MIME_TYPE);
+        }
+        catch
+        {
+            colorFormat = (int)MediaCodecCapabilities.Formatyuv420semiplanar;
+        }
+
+        var format = MediaFormat.CreateVideoFormat(MIME_TYPE, _Width, _Height);
         format.SetInteger(MediaFormat.KeyColorFormat, colorFormat);
         format.SetInteger(MediaFormat.KeyBitRate, _BitRate);
-        format.SetInteger(MediaFormat.KeyFrameRate, FRAME_RATE);
+        format.SetInteger(MediaFormat.KeyFrameRate, _frameRate);
         format.SetInteger(MediaFormat.KeyIFrameInterval, IFRAME_INTERVAL);
-
 
         _Encoder = MediaCodec.CreateEncoderByType(MIME_TYPE);
         _Encoder.Configure(format, null, null, MediaCodecConfigFlags.Encode);
@@ -190,6 +181,7 @@ namespace GrowPea.Droid
             int colorFormat = capabilities.ColorFormats[i];
             if (isRecognizedFormat(colorFormat))
             {
+                _SelectedCodecColor = (MediaCodecCapabilities)System.Enum.ToObject(typeof(MediaCodecCapabilities), colorFormat);
                 return colorFormat;
             }
 
@@ -203,11 +195,11 @@ namespace GrowPea.Droid
     {
         switch (colorFormat)
         {
-            case (int)MediaCodecCapabilities.Formatyuv420planar:
-            case (int)MediaCodecCapabilities.Formatyuv420packedplanar:
-            case (int)MediaCodecCapabilities.Formatyuv420semiplanar:
-            case (int)MediaCodecCapabilities.Formatyuv420packedsemiplanar:
-            case (int)MediaCodecCapabilities.TiFormatyuv420packedsemiplanar:
+            case (int)MediaCodecCapabilities.Formatyuv420planar: //I420
+            case (int)MediaCodecCapabilities.Formatyuv420packedplanar: //I420
+            case (int)MediaCodecCapabilities.Formatyuv420semiplanar: //NV12
+            case (int)MediaCodecCapabilities.Formatyuv420packedsemiplanar: //NV12
+            case (int)MediaCodecCapabilities.TiFormatyuv420packedsemiplanar: //NV12
                 return true;
 
             default:
@@ -235,7 +227,7 @@ namespace GrowPea.Droid
     private static long computePresentationTime(int frameIndex)
     {
         long value = frameIndex;
-        return 132 + (value * (1000000 / FRAME_RATE));
+        return 132 + (value * (1000000 / _frameRate));
     }
 
     private void EncodeMux()
@@ -276,20 +268,24 @@ namespace GrowPea.Droid
                             }
                             else
                             {
-                                Bitmap b = GetBitmap(imagedata);
+                                //old way don't need to do this anymore.
+                                //Bitmap b = GetBitmap(imagedata);
+                                //byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
+                                //int[] argb = new int[b.Width * b.Height];
+                                //b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                //encodeYUV420SP(yuv, argb, b.Width, b.Height);
+                                //b.Recycle();
+                                //old way don't need to do this anymore?
 
-                                byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
-                                int[] argb = new int[b.Width * b.Height];
+                                YuvImage yuv = GetYUVImage(imagedata);
 
-                                b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                var yuvarray = yuv.GetYuvData();
 
-                                encodeYUV420SP(yuv, argb, b.Width, b.Height);
-                                //yuv = swapYV12toI420(yuv, b.Width, b.Height);
+                                colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
 
+                                inputBuf.Put(yuvarray);
 
-                                b.Recycle();
-                                inputBuf.Put(yuv);
-                                chunkSize = yuv.Length;
+                                chunkSize = yuvarray.Length;
                             }
 
 
@@ -308,6 +304,7 @@ namespace GrowPea.Droid
                 }
 
                 ByteBuffer[] encoderOutputBuffers = _Encoder.GetOutputBuffers();
+                MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
 
                 int encoderStatus = _Encoder.DequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
 
@@ -366,7 +363,7 @@ namespace GrowPea.Droid
                             throw new RuntimeException("muxer hasnt started");
                         }
 
-                        //  adjust the ByteBuffer values to match BufferInfo (not needed?)
+                        //  adjust the ByteBuffer values to match BufferInfo (not needed?) old
                         //encodedData.Position(mBufferInfo.Offset);
                         //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
@@ -392,95 +389,158 @@ namespace GrowPea.Droid
         }
     }
 
-    private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
+    //used for all possible cases of color correction accounting for discrepencies between android camera saved images and codec color formats
+    //navigate to http://bigflake.com/mediacodec/ & see question 5 at the bottom
+
+    private void colorcorrection(ref byte[] yuv)
     {
-        int frameSize = width * height;
-        
-        int yIndex = 0;
-        int uvIndex = frameSize;
+        string codecformat;
 
-        int R, G, B, Y, U, V;
-        int index = 0;
-        for (int j = 0; j < height; j++)
+        switch (_SelectedCodecColor)
         {
-            for (int i = 0; i < width; i++)
-            {
-
-                R = (argb[index] & 0xff0000) >> 16;
-                G = (argb[index] & 0xff00) >> 8;
-                B = (argb[index] & 0xff) >> 0;
-
-                // well known RGB to YUV algorithm
-                Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
-                U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
-                V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
-
-                // NV21 has a plane of Y and interleaved planes of VU each sampled by a factor of 2
-                //    meaning for every 4 Y pixels there are 1 V and 1 U.  Note the sampling is every other
-                //    pixel AND every other scanline.
-                yuv420sp[yIndex++] = (byte)((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
-                if (j % 2 == 0 && index % 2 == 0)
-                {
-                    yuv420sp[uvIndex++] = (byte)((V < 0) ? 0 : ((V > 255) ? 255 : V));
-                    yuv420sp[uvIndex++] = (byte)((U < 0) ? 0 : ((U > 255) ? 255 : U));
-                }
-
-                index++;
-            }
+            case MediaCodecCapabilities.Formatyuv420semiplanar: //NV12
+            case MediaCodecCapabilities.Formatyuv420packedsemiplanar: //NV12
+            case MediaCodecCapabilities.TiFormatyuv420packedsemiplanar: //NV12
+                codecformat = "NV12";
+                break;
+            case MediaCodecCapabilities.Formatyuv420planar: //I420
+            case MediaCodecCapabilities.Formatyuv420packedplanar: //I420
+                codecformat = "I420";
+                break;
+            default:
+                codecformat = null;
+                break;
         }
+
+        if (codecformat == "NV12" &&  _CameraColorFormat == ImageFormatType.Nv21) //works as tested on pixel
+        {
+            swapNV21_NV12(ref yuv);
+        }
+        else if (codecformat == "I420" && _CameraColorFormat == ImageFormatType.Nv21) //not tested on device that has this config so not sure if it works
+        {
+            //if codeec is I420 it might be easier to convert from yv12 as seen below, maybe try to switch cam output to YV12? and do below conversion?
+            throw new NotImplementedException();
+        }
+        else if (codecformat == "I420" && _CameraColorFormat == ImageFormatType.Yv12) //not tested on device that has this config so not sure if it works
+        {
+            yuv = swapYV12toI420(yuv);
+        }
+        else if (codecformat == "NV12" && _CameraColorFormat == ImageFormatType.Yv12) //not tested on device that has this config so not sure if it works
+        {
+            //find conversion and put it here you shit
+            throw new NotImplementedException();
+        }
+
     }
 
-    private Bitmap GetBitmap(ByteBuffer framebuff)
-    {
-        Bitmap b;
-        try
-        {
-            var yuvimage = GetYUVImage(framebuff);
-            using (var baos = new MemoryStream())
-            {
-                yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, _Width, _Height), 100, baos); // Where 100 is the quality of the generated jpeg
-                byte[] jpegArray = baos.ToArray();
-                //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
-                b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Error(TAG, "could not get bitmap", e, e.Message);
-            throw new RuntimeException("could not get bitmap");
-        }
 
-        return b;
-    }
 
     private YuvImage GetYUVImage(ByteBuffer framebuff)
     {
         byte[] barray = new byte[framebuff.Remaining()];
         framebuff.Get(barray);
 
-        return new YuvImage(barray, ImageFormatType.Nv21, _Width, _Height, null);
+        return new YuvImage(barray, _CameraColorFormat, _Width, _Height, null);
     }
 
-    public byte[] swapYV12toI420(byte[] yv12bytes, int width, int height)
+
+
+    public void swapNV21_NV12(ref byte[] yuv)
     {
-        byte[] i420bytes = new byte[yv12bytes.Length];
-        for (int i = 0; i < width * height; i++)
-            i420bytes[i] = yv12bytes[i];
-        for (int i = width * height; i < width * height + (width / 2 * height / 2); i++)
-            i420bytes[i] = yv12bytes[i + (width / 2 * height / 2)];
-        for (int i = width * height + (width / 2 * height / 2); i < width * height + 2 * (width / 2 * height / 2); i++)
-            i420bytes[i] = yv12bytes[i - (width / 2 * height / 2)];
-        return i420bytes;
+        int length = 0;
+        if (yuv.Length % 2 == 0)
+            length = yuv.Length;
+        else
+            length = yuv.Length - 1; //for uneven we need to shorten loop because it will go out of bounds because of i1 += 2
+
+        for (int i1 = 0; i1 < length; i1 += 2)
+        {
+            if (i1 >= _Width * _Height)
+            {
+                byte tmp = yuv[i1];
+                yuv[i1] = yuv[i1 + 1];
+                yuv[i1 + 1] = tmp;
+            }
+        }
     }
 
 
-        //private static long computePresentationTimeNsec(int frameIndex)
+
+        public byte[] swapYV12toI420(byte[] yv12bytes)
+        {
+            byte[] i420bytes = new byte[yv12bytes.Length];
+            for (int i = 0; i < _Width * _Height; i++)
+                i420bytes[i] = yv12bytes[i];
+            for (int i = _Width * _Height; i < _Width * _Height + (_Width / 2 * _Height / 2); i++)
+                i420bytes[i] = yv12bytes[i + (_Width / 2 * _Height / 2)];
+            for (int i = _Width * _Height + (_Width / 2 * _Height / 2); i < _Width * _Height + 2 * (_Width / 2 * _Height / 2); i++)
+                i420bytes[i] = yv12bytes[i - (_Width / 2 * _Height / 2)];
+            return i420bytes;
+        }
+
+        //private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
         //{
-        //    long ONE_BILLION = 1000000000;
-        //    return (frameIndex * (ONE_BILLION / FRAME_RATE));
+        //    int frameSize = width * height;
+
+        //    int yIndex = 0;
+        //    int uvIndex = frameSize;
+
+        //    int R, G, B, Y, U, V;
+        //    int index = 0;
+        //    for (int j = 0; j < height; j++)
+        //    {
+        //        for (int i = 0; i < width; i++)
+        //        {
+
+        //            R = (argb[index] & 0xff0000) >> 16;
+        //            G = (argb[index] & 0xff00) >> 8;
+        //            B = (argb[index] & 0xff) >> 0;
+
+        //            // well known RGB to YUV algorithm
+        //            Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
+        //            U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
+        //            V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
+
+        //            // NV21 has a plane of Y and interleaved planes of VU each sampled by a factor of 2
+        //            //    meaning for every 4 Y pixels there are 1 V and 1 U.  Note the sampling is every other
+        //            //    pixel AND every other scanline.
+        //            yuv420sp[yIndex++] = (byte)((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
+        //            if (j % 2 == 0 && index % 2 == 0)
+        //            {
+        //                yuv420sp[uvIndex++] = (byte)((V < 0) ? 0 : ((V > 255) ? 255 : V));
+        //                yuv420sp[uvIndex++] = (byte)((U < 0) ? 0 : ((U > 255) ? 255 : U));
+        //            }
+
+        //            index++;
+        //        }
+        //    }
+        //}
+
+
+
+        //private Bitmap GetBitmap(ByteBuffer framebuff)
+        //{
+        //    Bitmap b;
+        //    try
+        //    {
+        //        var yuvimage = GetYUVImage(framebuff);
+        //        using (var baos = new MemoryStream())
+        //        {
+        //            yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, _Width, _Height), 100, baos); // Where 100 is the quality of the generated jpeg
+        //            byte[] jpegArray = baos.ToArray();
+        //            //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
+        //            b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Log.Error(TAG, "could not get bitmap", e, e.Message);
+        //        throw new RuntimeException("could not get bitmap");
+        //    }
+
+        //    return b;
         //}
 
     }
-
 
 }
