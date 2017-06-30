@@ -86,7 +86,7 @@
     <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="Growsaic.cs" />
     <Compile Include="MainMenu.cs" />
-    <Compile Include="Resource.designer.cs" />
+    <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
