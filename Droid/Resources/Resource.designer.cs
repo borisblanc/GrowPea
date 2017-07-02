@@ -26,6 +26,7 @@ namespace GrowPea.Droid
 		
 		public static void UpdateIdValues()
 		{
+			global::Mindscape.Raygun4Net.Xamarin.Android.Resource.String.library_name = global::GrowPea.Droid.Resource.String.library_name;
 		}
 		
 		public partial class Attribute
@@ -171,6 +172,9 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f020015
 			public const int common_google_signin_btn_text_light_pressed = 2130837525;
 			
+			// aapt resource value: 0x7f020016
+			public const int switchcamera_48 = 2130837526;
+			
 			static Drawable()
 			{
 				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
@@ -193,11 +197,14 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f080006
 			public const int auto = 2131230726;
 			
-			// aapt resource value: 0x7f08000c
-			public const int btnRecord = 2131230732;
-			
 			// aapt resource value: 0x7f08000d
-			public const int btn_Growsaic = 2131230733;
+			public const int btnRecord = 2131230733;
+			
+			// aapt resource value: 0x7f08000e
+			public const int btn_Growsaic = 2131230734;
+			
+			// aapt resource value: 0x7f08000c
+			public const int btnswCam = 2131230732;
 			
 			// aapt resource value: 0x7f080007
 			public const int dark = 2131230727;
@@ -290,8 +297,8 @@ namespace GrowPea.Droid
 		public partial class String
 		{
 			
-			// aapt resource value: 0x7f060012
-			public const int app_name = 2131099666;
+			// aapt resource value: 0x7f060013
+			public const int app_name = 2131099667;
 			
 			// aapt resource value: 0x7f060001
 			public const int common_google_play_services_enable_button = 2131099649;
@@ -344,8 +351,11 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f060010
 			public const int common_signin_button_text_long = 2131099664;
 			
+			// aapt resource value: 0x7f060012
+			public const int hello = 2131099666;
+			
 			// aapt resource value: 0x7f060011
-			public const int hello = 2131099665;
+			public const int library_name = 2131099665;
 			
 			static String()
 			{

@@ -21,6 +21,11 @@
         android:layout_width="fill_parent"
         android:layout_weight=".10"
         android:gravity="center">
+        <ImageButton
+            android:layout_width="125dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/btnswCam"
+            android:src="@drawable/switchcamera_48" />
         <Button
             android:text="RECORD"
             android:layout_width="125dp"
