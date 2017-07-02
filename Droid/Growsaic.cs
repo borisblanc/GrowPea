@@ -12,6 +12,7 @@ using Android.Content;
 using Android.Gms.Vision.Faces;
 using Java.Lang;
 using System;
+using System.Collections.Generic;
 using Android.Runtime;
 using Android.Graphics;
 using Android.Content.Res;
@@ -19,7 +20,8 @@ using Android.Gms.Common;
 using System.Threading.Tasks;
 using Android.Content.PM;
 using System.ComponentModel;
-
+using Android.Views;
+using Java.Nio;
 
 
 namespace GrowPea.Droid
@@ -45,7 +47,8 @@ namespace GrowPea.Droid
         private int pFramewidth = 640;
         private int pFrameHeight = 480;
 
-        private Single Fps = 30.0f;
+        private Single _recordFps = 60.0f;
+        private int _createfps = 30;
         private int vidlengthseconds = 3;
 
         private const int framemin = 300; //minimum number of frames needed to process this
@@ -54,6 +57,7 @@ namespace GrowPea.Droid
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
+            this.RequestWindowFeature(WindowFeatures.NoTitle);
 
             this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
             
@@ -127,7 +131,7 @@ namespace GrowPea.Droid
             mCameraSource = new CameraSource.Builder(context, myFaceDetector)
                     .SetRequestedPreviewSize(pFramewidth, pFrameHeight)
                     .SetFacing(CameraFacing.Front)
-                    .SetRequestedFps(Fps)
+                    .SetRequestedFps(_recordFps)
                     .SetAutoFocusEnabled(true)
                     .Build();
 
@@ -157,40 +161,40 @@ namespace GrowPea.Droid
 
         private async void StartFrameProcessing()
         {
+            Showpopup("Processing Smiles :)!", ToastLength.Short);
 
-            var toast = Toast.MakeText(this, "Processing Smiles :)!", ToastLength.Short);
-            toast.Show();
-
-            bool result= false;
+            List<ByteBuffer> images;
+            bool result;
 
             if (myFaceDetector._allFrameData.Count >= framemin) 
             {
-                var fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight, (int)Fps, vidlengthseconds);
-                result = await fdp.BeginProcessingFrames();
+                var fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
+                images = await fdp.BeginProcessingFrames();
+
+                if (images == null)
+                {
+                    Showpopup("Error with Smiles processing :(!", ToastLength.Short);
+                }
+                else
+                {
+                    Showpopup("Smiles processed :)!", ToastLength.Short);
+                    result = await fdp.BeginMakeBufferVideo(images);
+
+                    Showpopup(result ? "Video Created :)!" : "Error with video (!", ToastLength.Short);
+                }
             }
             else
             {
-                toast = Toast.MakeText(this, "Need a longer video!! Try Again.", ToastLength.Short);
-                toast.Show();
-                return;
-            }
-
-
-            if (result)
-            {
-                toast = Toast.MakeText(this, "Smiles Processed:)!", ToastLength.Short);
-                toast.Show();
-            }
-            else
-            {
-
-                toast = Toast.MakeText(this, "Error with Smiles:(!", ToastLength.Short);
-                toast.Show();
-
+                Showpopup("Need a longer video!! Try Again.", ToastLength.Short);
             }
         }
 
-
+        private void Showpopup(string msg, ToastLength length)
+        {
+            var toast = Toast.MakeText(this, msg, length);
+            toast.Show();
+        }
+            
 
         protected override void OnResume()
         {
