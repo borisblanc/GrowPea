@@ -30,6 +30,8 @@ namespace GrowPea.Droid
 
         private int _vidlengthseconds;
 
+        public List<int> beststartindexes;
+
         private int bitRate
         {
             get
@@ -50,8 +52,6 @@ namespace GrowPea.Droid
             
         }
 
-
-
         public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds)
         {
             _allFrameData = allframedata.Select(f=> f.Value).ToList();
@@ -60,6 +60,7 @@ namespace GrowPea.Droid
             _fps = fps;
             _vidlengthseconds = vidlengthseconds;
             ALLFaces = new List<BmFace>();
+            beststartindexes = new List<int>();
         }
 
         public async Task<List<ByteBuffer>> BeginProcessingFrames()
@@ -81,7 +82,7 @@ namespace GrowPea.Droid
 
         private List<ByteBuffer> ProcessFrames()
         {
-            var coreframesavg = new Dictionary<int, float>();
+            var coreframesavg = new Dictionary<int, double>();
             var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video 
             lock (obj) //one thread at a time
             {
@@ -91,8 +92,16 @@ namespace GrowPea.Droid
                     {
                         for (var i = 0; i < _allFrameData.Count - coreframeslength; i++)
                         {
-                            coreframesavg.Add(i, _allFrameData.GetRange(i, coreframeslength).Sum(f => GetImageUsability(GetSparseFace(f._sparsearray))));
-                            Log.Info(TAG, "moving average index" + i);
+                            var range = _allFrameData.GetRange(i, coreframeslength).Select(f => GetImageUsability(GetSparseFace(f._sparsearray))).ToList();
+
+                            var avg = range.Average();
+
+                            var sumOfSquaresOfDifferences = range.Select(val => (val - avg) * (val - avg)).Sum();
+
+                            var stdev = Math.Sqrt(sumOfSquaresOfDifferences / range.Count);
+
+                            coreframesavg.Add(i, avg - stdev); //avg - std dev should give those with best avg score and lowest deviation
+                            //Log.Info(TAG, "moving average index" + i);
                         }
                     }
                 }
@@ -103,7 +112,8 @@ namespace GrowPea.Droid
                 }
             }
 
-            var bestframegroupindex = coreframesavg.Aggregate((l, r) => l.Value > r.Value ? l : r).Key; //gets keys of max value from dictionary
+            var bestframegroupindex = coreframesavg.Aggregate((l, r) => l.Value > r.Value ? l : r).Key; //gets keys of max value (avg-stdev) from dictionary
+            beststartindexes.Add(bestframegroupindex); //used if video is reparsed by user.
 
             var frameoffset = (GetFrameTotal() - coreframeslength) / 2; //will get offset to put coreframes in middle of total frames for entire video.
                 

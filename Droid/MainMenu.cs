@@ -33,6 +33,8 @@ namespace GrowPea.Droid
                 var intent = new Intent(this, typeof(Growsaic));
                 StartActivity(intent);
             };
+
+            //throw new InvalidOperationException("raygun bullshit");
         }
     }
 }

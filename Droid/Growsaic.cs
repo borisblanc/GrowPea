@@ -42,7 +42,7 @@ namespace GrowPea.Droid
         private int _createfps = 30;
         private int vidlengthseconds = 3;
 
-        private const int framemin = 300; //minimum number of frames needed to process this
+        private const int framemin = 200; //minimum number of frames needed to process this
 
         private CameraFacing camface = CameraFacing.Front; //default may change
 

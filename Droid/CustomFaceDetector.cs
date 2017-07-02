@@ -47,9 +47,7 @@ namespace GrowPea.Droid
                         isRecording = false;
                     }
 
-                    var _framebuff =
-                        Utils.deepCopy(frame
-                            .GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
+                    var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
                     var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
                     var detected = _detector.Detect(frame);
