@@ -2,22 +2,12 @@
 using Android.Widget;
 using Android.OS;
 using Android.Gms.Vision;
-using Android.Support.V4.App;
-
-
 using Android.Util;
-using Android;
-
-using Android.Content;
 using Android.Gms.Vision.Faces;
-using Java.Lang;
 using System;
 using System.Collections.Generic;
-using Android.Runtime;
 using Android.Graphics;
-using Android.Content.Res;
 using Android.Gms.Common;
-using System.Threading.Tasks;
 using Android.Content.PM;
 using System.ComponentModel;
 using Android.Views;
@@ -38,6 +28,7 @@ namespace GrowPea.Droid
         private GraphicOverlay mGraphicOverlay;
 
         private Button mRecbutton;
+        private ImageButton mSwitchcamButton;
 
         private static readonly int RC_HANDLE_GMS = 9001;
 
@@ -53,6 +44,7 @@ namespace GrowPea.Droid
 
         private const int framemin = 300; //minimum number of frames needed to process this
 
+        private CameraFacing camface = CameraFacing.Front; //default may change
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -67,14 +59,16 @@ namespace GrowPea.Droid
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
             mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
+            mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
 
-            mRecbutton.Click += (sender, e) => SetRecording();
+            mRecbutton.Click += (sender, e) => ToggleRecording();
+            mSwitchcamButton.Click += (sender, e) => ToggleCamface();
 
             CreateCameraSource();
         }
 
 
-        private void SetRecording()
+        private void ToggleRecording()
         {
             if (!isRecording)
             {
@@ -83,6 +77,7 @@ namespace GrowPea.Droid
                 myFaceDetector.isRecording = true;
                 mRecbutton.Text = "STOP";
                 mRecbutton.SetTextColor(Color.Red);
+                mSwitchcamButton.Enabled = false;
             }
             else
             {
@@ -91,11 +86,32 @@ namespace GrowPea.Droid
                 myFaceDetector.isRecording = false;
                 mRecbutton.Text = "RECORD";
                 mRecbutton.SetTextColor(Color.Black);
+                mSwitchcamButton.Enabled = true;
 
                 if (myFaceDetector._allFrameData.Count > 0)
                 {
                     StartFrameProcessing();
                 }
+            }
+        }
+
+        private void ToggleCamface()
+        {
+            if (camface == CameraFacing.Front)
+            {
+                camface = CameraFacing.Back;
+                mCameraSource.Release();
+                mPreview.Stop();
+                CreateCameraSource();
+                StartCameraSource();
+            }
+            else
+            {
+                camface = CameraFacing.Front;
+                mCameraSource.Release();
+                mPreview.Stop();
+                CreateCameraSource();
+                StartCameraSource();
             }
         }
 
@@ -130,7 +146,7 @@ namespace GrowPea.Droid
 
             mCameraSource = new CameraSource.Builder(context, myFaceDetector)
                     .SetRequestedPreviewSize(pFramewidth, pFrameHeight)
-                    .SetFacing(CameraFacing.Front)
+                    .SetFacing(camface)
                     .SetRequestedFps(_recordFps)
                     .SetAutoFocusEnabled(true)
                     .Build();

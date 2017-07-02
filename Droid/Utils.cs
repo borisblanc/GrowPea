@@ -1,21 +1,15 @@
-﻿
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 using Android.Graphics;
+using Android.Util;
+using Java.Lang;
 using Java.Nio;
+using Exception = System.Exception;
 
 
 namespace GrowPea
 {
     public static class Utils
     {
-        
-
         public static ByteBuffer deepCopy(ByteBuffer orig)
         {
             int pos = orig.Position(), lim = orig.Limit();
@@ -91,6 +85,29 @@ namespace GrowPea
             {
                 bitmap.Compress(Bitmap.CompressFormat.Png, 100, stream);
             }
+        }
+
+
+        private static Bitmap GetBitmap(YuvImage yuvimage, int width, int height)
+        {
+            Bitmap b;
+            try
+            {
+                using (var baos = new MemoryStream())
+                {
+                    yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, width, height), 100, baos); // Where 100 is the quality of the generated jpeg
+                    byte[] jpegArray = baos.ToArray();
+                    //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
+                    b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error("Utils", "could not get bitmap", e, e.Message);
+                throw new RuntimeException("could not get bitmap");
+            }
+
+            return b;
         }
 
 

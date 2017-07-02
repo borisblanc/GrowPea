@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
-using Android.Views;
 using Android.Widget;
 using Android.Content.PM;
+using Mindscape.Raygun4Net;
+using Mindscape.Raygun4Net.Messages;
 
 namespace GrowPea.Droid
 {
@@ -19,6 +15,13 @@ namespace GrowPea.Droid
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+            RaygunClient.Initialize("3amrQKpbXz5tMRZ1yoGgQw==").AttachCrashReporting().AttachPulse(this);
+
+            RaygunClient.Current.UserInfo = new RaygunIdentifierMessage("borisblanc@gmail.com")
+            {
+                FirstName = "Boris",
+                FullName = "BR",
+            };
 
             SetContentView(Resource.Layout.MainMenu);
             // Create your application here

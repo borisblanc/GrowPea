@@ -41,6 +41,9 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mindscape.Raygun4Net.Xamarin.Android, Version=5.5.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mindscape.Raygun4Net.5.5.1\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -85,6 +88,7 @@
     <Compile Include="FaceGraphic.cs" />
     <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="Growsaic.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="MainMenu.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -112,6 +116,9 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\Cheese.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\switchcamera_48.png" />
   </ItemGroup>
   <Import Project="..\GrowPea\GrowPea.projitems" Label="Shared" Condition="Exists('..\GrowPea\GrowPea.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

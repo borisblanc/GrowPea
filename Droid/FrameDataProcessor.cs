@@ -1,31 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-
-using Android.Graphics;
-using Java.IO;
-
 using Android.Gms.Vision.Faces;
-using Android.Gms.Vision;
-
 using Android.Util;
-
 using Java.Nio;
-
-using System.IO;
-using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
-using Java.Lang;
-using Java.Security;
-using Console = System.Console;
 using Exception = System.Exception;
 using Object = System.Object;
 using String = System.String;
@@ -63,8 +42,8 @@ namespace GrowPea.Droid
                     _bitRate = 3000000;
                 else
                 {
-                    Log.Error(TAG, "Uknown bitrate calculation");
-                    throw new RuntimeException("Uknown bitrate calculation");
+                    Log.Warn(TAG, "Uknown bitrate calculation");
+                    _bitRate = 6000000;
                 }
                 return _bitRate;
             }
@@ -106,8 +85,6 @@ namespace GrowPea.Droid
             var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video 
             lock (obj) //one thread at a time
             {
-
-
                 try
                 {
                     if (_allFrameData != null)
@@ -122,8 +99,7 @@ namespace GrowPea.Droid
                 catch (Exception e)
                 {
                     Log.Error(TAG, "Frames Processing messed up", e);
-                    //throw new RuntimeException("Frames Processing messed up");
-                    return null;
+                    throw;
                 }
             }
 
@@ -135,103 +111,10 @@ namespace GrowPea.Droid
         }
 
 
-        //private bool ProcessFramesold()
-        //{
-        //    //write code here to process
-        //    Log.Info(TAG, string.Format("number of frames {0}",_allFrameData.Values.Count));
-        //    var bestfaceframes = new List<BmFace>();
-
-        //    try
-        //    {
-        //        if (_allFrameData != null)
-        //        {
-        //            foreach (var FD in _allFrameData.Values)
-        //            {
-        //                var face = GetSparseFace(FD._sparsearray);
-
-        //                if (face != null)
-        //                {
-        //                    var iUse = GetImageUsability(face);
-        //                    lock (obj)
-        //                    {
-        //                        //var bmap = GetBitmap(FD._bytebuff);
-        //                        ALLFaces.Add(new BmFace(FD._timestamp, FD._bytebuff, iUse));
-        //                    }
-        //                }
-
-        //            }
-
-                    
-        //            var frameoffsetMinusStart = GetStartOffset(); //start offset
-        //            var frameboundPlusEnd = GetFrameTotal(); //count of frames
-        //            float maxIuse;
-        //            lock (obj)
-        //            {
-        //                var validframes = ALLFaces.Select((Value, Index) => new {Value, Index})
-        //                .Where(f => f.Index >= frameoffsetMinusStart &&
-        //                            f.Index <= ALLFaces.Count - (frameboundPlusEnd - frameoffsetMinusStart)).ToList(); //offsets take into account array size so best face is within bounds
-
-
-        //                maxIuse = validframes.Max(x => x.Value.Iuse);
-
-
-        //                var bestfaceIndex = validframes.First(f => f.Value.Iuse == maxIuse);
-
-
-        //                bestfaceframes = ALLFaces.GetRange(bestfaceIndex.Index - frameoffsetMinusStart, frameboundPlusEnd); //range around bestface of _fps * _vidlengthseconds
-        //            }
-                    
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Log.Error(TAG, "Frames Processing messed up", e);
-        //        throw new RuntimeException("Frames Processing messed up");
-        //    }
-
-
-        //    //for(int i = 0; i < bestfaceframes.Count; i++)
-        //    //{
-        //    //    ExportBitmapAsPNG(bestfaceframes[i].BM, i); 
-        //    //}
-
-        //    List<ByteBuffer> allBitmaps = bestfaceframes.Select(f => f.bytebuff).ToList();
-
-        //    string outputfilepath = MakeBufferVideo(allBitmaps, DateTime.Now.Ticks.ToString());
-
-        //    if ( outputfilepath != null)
-        //        return true;
-        //    else
-        //        return false;
-        //}
-
-        //will depend on fps and length of video
-        //private int GetStartOffset()
-        //{
-        //    if (_vidlengthseconds == 3)
-        //    {
-        //        return _fps; //for 3 second vids fps will always equal start offset (eg.. we will always want one second worth of frames prior to best smile)
-        //    }
-        //    else if (_vidlengthseconds == 4)
-        //    {
-        //        return _fps; //for 4 second vids fps will always equal start offset (eg.. we will always want one second worth of frames prior to best smile)
-        //    }
-        //    else if (_vidlengthseconds == 5)
-        //    {
-        //        return _fps * 2; //for 5 second vids fps will always equal start offset * 2 (eg.. we will always want two seconds worth of frames prior to best smile)
-        //    }
-        //    else
-        //    {
-        //        return _fps;
-        //    }
-        //}
-
-        //will depend on fps and length of video
         private int GetFrameTotal()
         {
             return _fps * _vidlengthseconds; //total frames will always be frames per second * number of seconds
         }
-
 
         private Face GetSparseFace(SparseArray array)
         {
@@ -250,12 +133,10 @@ namespace GrowPea.Droid
             }
             catch (Exception e)
             {
-                
+                Log.Error(TAG, "GetSparseFace borked somehow", e);
             }
             return face;
         }
-
-
 
 
         public bool MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
@@ -276,7 +157,8 @@ namespace GrowPea.Droid
             }
             catch(Exception e)
             {
-                return false;
+                Log.Error(TAG, "MakeBufferVideo borked somehow", e);
+                throw;
             }
             return true;
         }
@@ -297,34 +179,14 @@ namespace GrowPea.Droid
             }
             catch (Exception e)
             {
+                Log.Error(TAG, "GetImageUsability borked somehow", e);
                 return 0;
             }
         }
 
-        //private float GetImageUsabilityold(Face face)
-        //{
-        //    return ((face.IsSmilingProbability * 2) + face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability) / 3;
-        //}
-
     }
 
-    public class BmFace
-    {
-        //public Bitmap BM;
 
-        public float Iuse;
-
-        public float TS;
-
-        public ByteBuffer bytebuff;
-
-        public BmFace(float timestamp, ByteBuffer bbyte, float ImageUsability)
-        {
-            TS = timestamp;
-            bytebuff = bbyte;
-            Iuse = ImageUsability;
-        }
-    }
 
 
 }

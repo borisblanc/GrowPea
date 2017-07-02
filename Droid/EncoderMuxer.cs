@@ -1,19 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Android.Graphics;
 using Android.Media;
-using Android.Opengl;
-using Android.Test;
-using Android.Text.Format;
 using Android.Util;
-using Android.Views;
 using Java.Lang;
 using Java.Nio;
-using Environment = Android.OS.Environment;
 using Exception = System.Exception;
-using File = Java.IO.File;
-using IOException = Java.IO.IOException;
 using String = System.String;
 
 //See http://b.android.com/37769 for a discussion of input format pitfalls.
@@ -94,10 +86,11 @@ namespace GrowPea.Droid
         catch (Exception e)
         {
             Log.Error(TAG, "Encoder & Mux failed", e);
+            throw;
         }
         finally
         {
-            //  release encoder, muxer, and input Surface
+            //  release encoder, muxer
             releaseEncoder();
         }
     }
@@ -139,10 +132,10 @@ namespace GrowPea.Droid
         {
             _Muxer = new MediaMuxer(_Filepath, MuxerOutputType.Mpeg4);
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             Log.Error(TAG, e.Message, e);
-            throw new RuntimeException("MediaMuxer creation failed", e);
+            throw;
         }
 
         _TrackIndex = -1;
@@ -385,7 +378,7 @@ namespace GrowPea.Droid
         catch (Exception e)
         {
             Log.Error(TAG, "Decode or Muxer failed", e, e.Message);
-            throw new RuntimeException("Decode or Muxer failed");
+            throw;
         }
     }
 
@@ -466,17 +459,17 @@ namespace GrowPea.Droid
 
 
 
-        public byte[] swapYV12toI420(byte[] yv12bytes)
-        {
-            byte[] i420bytes = new byte[yv12bytes.Length];
-            for (int i = 0; i < _Width * _Height; i++)
-                i420bytes[i] = yv12bytes[i];
-            for (int i = _Width * _Height; i < _Width * _Height + (_Width / 2 * _Height / 2); i++)
-                i420bytes[i] = yv12bytes[i + (_Width / 2 * _Height / 2)];
-            for (int i = _Width * _Height + (_Width / 2 * _Height / 2); i < _Width * _Height + 2 * (_Width / 2 * _Height / 2); i++)
-                i420bytes[i] = yv12bytes[i - (_Width / 2 * _Height / 2)];
-            return i420bytes;
-        }
+    public byte[] swapYV12toI420(byte[] yv12bytes)
+    {
+        byte[] i420bytes = new byte[yv12bytes.Length];
+        for (int i = 0; i < _Width * _Height; i++)
+            i420bytes[i] = yv12bytes[i];
+        for (int i = _Width * _Height; i < _Width * _Height + (_Width / 2 * _Height / 2); i++)
+            i420bytes[i] = yv12bytes[i + (_Width / 2 * _Height / 2)];
+        for (int i = _Width * _Height + (_Width / 2 * _Height / 2); i < _Width * _Height + 2 * (_Width / 2 * _Height / 2); i++)
+            i420bytes[i] = yv12bytes[i - (_Width / 2 * _Height / 2)];
+        return i420bytes;
+    }
 
         //private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
         //{
@@ -518,28 +511,7 @@ namespace GrowPea.Droid
 
 
 
-        //private Bitmap GetBitmap(ByteBuffer framebuff)
-        //{
-        //    Bitmap b;
-        //    try
-        //    {
-        //        var yuvimage = GetYUVImage(framebuff);
-        //        using (var baos = new MemoryStream())
-        //        {
-        //            yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, _Width, _Height), 100, baos); // Where 100 is the quality of the generated jpeg
-        //            byte[] jpegArray = baos.ToArray();
-        //            //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
-        //            b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Log.Error(TAG, "could not get bitmap", e, e.Message);
-        //        throw new RuntimeException("could not get bitmap");
-        //    }
 
-        //    return b;
-        //}
 
     }
 

@@ -1,16 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Android.Gms.Vision.Faces;
 using Android.Gms.Vision;
 using Android.Util;
-using Android.Graphics;
-using Java.IO;
-using Java.Nio;
-using System.Threading.Tasks;
 using System.ComponentModel;
 
 
@@ -47,20 +39,31 @@ namespace GrowPea.Droid
         {
             if (isRecording)
             {
-                if (_allFrameData.Count > 5000) //cancel recording if too many frames are collected and notify subscribers
+                try
                 {
-                    isRecording = false;
+                    if (_allFrameData.Count > 5000
+                    ) //cancel recording if too many frames are collected and notify subscribers
+                    {
+                        isRecording = false;
+                    }
+
+                    var _framebuff =
+                        Utils.deepCopy(frame
+                            .GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
+                    var _frametimestamp = frame.GetMetadata().TimestampMillis;
+
+                    var detected = _detector.Detect(frame);
+
+                    if (!_allFrameData.ContainsKey(_frametimestamp))
+                        _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, _framebuff, detected));
+
+                    return detected;
                 }
-
-                var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
-                var _frametimestamp = frame.GetMetadata().TimestampMillis;
-
-                var detected = _detector.Detect(frame);
-
-                if (!_allFrameData.ContainsKey(_frametimestamp))
-                    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, _framebuff, detected));
-
-                return detected;
+                catch (Exception e)
+                {
+                    Log.Error("CustomFaceDetector", "Detect(Frame frame) missed something", e, e.Message);
+                    return _detector.Detect(frame);
+                }
             }
             else
             {
@@ -79,25 +82,6 @@ namespace GrowPea.Droid
             return _detector.SetFocus(id);
         }
 
-
-
     }
 
-
-
-    public class FrameData
-    {
-        public ByteBuffer _bytebuff;
-
-        public SparseArray _sparsearray;
-
-        public float _timestamp;
-
-        public FrameData(float timestamp, ByteBuffer bytebuff, SparseArray sparsearray)
-        {
-            _timestamp = timestamp;
-            _bytebuff = bytebuff;
-            _sparsearray = sparsearray;
-        }
-    }
 }
