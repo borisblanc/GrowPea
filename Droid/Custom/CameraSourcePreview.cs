@@ -35,7 +35,7 @@ namespace GrowPea.Droid
         private SurfaceView mSurfaceView;
         private bool mStartRequested;
         private bool mSurfaceAvailable;
-        private CameraSource mCameraSource;
+        public CameraSource mCameraSource;
 
         private GraphicOverlay mOverlay;
 

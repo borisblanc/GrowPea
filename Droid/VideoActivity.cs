@@ -10,10 +10,15 @@ using Android.Graphics;
 using Android.Gms.Common;
 using Android.Content.PM;
 using System.ComponentModel;
+using System.Linq;
+using Android.Content;
+using Android.Hardware.Camera2;
+using Android.Hardware.Camera2.Params;
 using Android.Views;
 using Java.IO;
 using Java.Nio;
 using Console = System.Console;
+using Face = Android.Gms.Vision.Faces.Face;
 using File = System.IO.File;
 
 
@@ -39,8 +44,8 @@ namespace GrowPea.Droid
         private bool isRecording = false;
         private CustomFaceDetector myFaceDetector;
 
-        private int pFramewidth = 640;
-        private int pFrameHeight = 480;
+        private int pFramewidth;
+        private int pFrameHeight;
 
         private Single _recordFps = 60.0f;
         private int _createfps = 30;
@@ -128,12 +133,16 @@ namespace GrowPea.Droid
         {
             try
             {
-                //if (_currentfilepath != null && File.Exists(_currentfilepath))
-                //    //CrossFilePicker.Current.OpenFile(_currentfilepath);
-                //else
-                //{
-                //    Showpopup("Video not available", ToastLength.Short);
-                //}
+                if (_currentfilepath != null && File.Exists(_currentfilepath))
+                {
+                    var intent = new Intent(this, typeof(VideoViewer));
+                    intent.PutExtra("FilePath", _currentfilepath);
+                    StartActivity(intent);
+                }
+                else
+                {
+                    Showpopup("Video not available", ToastLength.Short);
+                }
             }
             catch (Exception e)
             {
@@ -142,16 +151,47 @@ namespace GrowPea.Droid
 
         }
 
+        private void SetVideoSize(CameraFacing camface) //determines cameras supported sizes and sets frame sizes for video as best as possible
+        {
+            CameraManager manager = (CameraManager)GetSystemService(Context.CameraService);
+            var cams = manager.GetCameraIdList();
+
+            LensFacing lensface = camface == CameraFacing.Back ? LensFacing.Back : LensFacing.Front;
+
+            foreach (var camid in cams)
+            {
+                var camprops = manager.GetCameraCharacteristics(camid);
+
+                if ((int)camprops.Get(CameraCharacteristics.LensFacing) == (int) lensface)
+                {
+                    var map = (StreamConfigurationMap)camprops.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
+                    Size[] sizes = map.GetOutputSizes((int)ImageFormatType.Jpeg);
+                    if (sizes.ToList().Any(s => s.Width == 1280 && s.Height == 720)) //if this format is supported then always use it, this is 16:9 aspect HD
+                    {
+                        pFramewidth = 1280;
+                        pFrameHeight = 720;
+                    }
+                    else //if (sizes.ToList().Any(s => s.Width == 640 && s.Height == 480)) //if HD is not supported use this default
+                    {//if HD is not supported use this default
+                        pFramewidth = 640;
+                        pFrameHeight = 480;
+                    }
+                }
+            }
+
+        }
 
 
         private void CreateCameraSource()
         {
+            SetVideoSize(camface);
 
             var context = Application.Context;
-            FaceDetector detector = new FaceDetector.Builder(context)
+            FaceDetector detector = new FaceDetector.Builder(context) //consider moving to background thread
                     .SetTrackingEnabled(true)
                     .SetClassificationType(ClassificationType.All)
                     .SetProminentFaceOnly(true)
+                    .SetMinFaceSize((float)0.2)
                     .Build();
 
             myFaceDetector = new CustomFaceDetector(detector);

@@ -189,7 +189,7 @@ namespace GrowPea.Droid
 		{
 			
 			// aapt resource value: 0x7f080010
-			public const int VideoView = 2131230736;
+			public const int VideoView1 = 2131230736;
 			
 			// aapt resource value: 0x7f080000
 			public const int adjust_height = 2131230720;

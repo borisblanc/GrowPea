@@ -209,7 +209,7 @@ namespace GrowPea.Droid
             _Encoder = null;
         }
 
-        if (_Muxer != null)
+        if (_Muxer != null && _MuxerStarted)
         {
             _Muxer.Stop();
             _Muxer.Release();
