@@ -11,7 +11,10 @@ using Android.Gms.Common;
 using Android.Content.PM;
 using System.ComponentModel;
 using Android.Views;
+using Java.IO;
 using Java.Nio;
+using Console = System.Console;
+using File = System.IO.File;
 
 
 namespace GrowPea.Droid
@@ -29,6 +32,7 @@ namespace GrowPea.Droid
 
         private Button mRecbutton;
         private ImageButton mSwitchcamButton;
+        private Button mPlaybutton;
 
         private static readonly int RC_HANDLE_GMS = 9001;
 
@@ -46,6 +50,8 @@ namespace GrowPea.Droid
 
         private CameraFacing camface = CameraFacing.Front; //default may change
 
+        private string _currentfilepath;
+
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
@@ -54,15 +60,18 @@ namespace GrowPea.Droid
             this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
             
             // Set our view from the "main" layout resource
-            SetContentView(Resource.Layout.Growsaic);
+            SetContentView(Resource.Layout.VideoCapture);
 
             mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
             mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
             mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
             mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
+            mPlaybutton = FindViewById<Button>(Resource.Id.btnPlay);
 
             mRecbutton.Click += (sender, e) => ToggleRecording();
             mSwitchcamButton.Click += (sender, e) => ToggleCamface();
+            mPlaybutton.Click += (sender, e) => OpenVideo();
+            mPlaybutton.Enabled = _currentfilepath != null;
 
             CreateCameraSource();
         }
@@ -113,6 +122,24 @@ namespace GrowPea.Droid
                 CreateCameraSource();
                 StartCameraSource();
             }
+        }
+
+        private void OpenVideo()
+        {
+            try
+            {
+                //if (_currentfilepath != null && File.Exists(_currentfilepath))
+                //    //CrossFilePicker.Current.OpenFile(_currentfilepath);
+                //else
+                //{
+                //    Showpopup("Video not available", ToastLength.Short);
+                //}
+            }
+            catch (Exception e)
+            {
+                
+            }
+
         }
 
 
@@ -179,13 +206,10 @@ namespace GrowPea.Droid
         {
             Showpopup("Processing Smiles :)!", ToastLength.Short);
 
-            List<ByteBuffer> images;
-            bool result;
-
             if (myFaceDetector._allFrameData.Count >= framemin) 
             {
                 var fdp = new FrameDataProcessor(myFaceDetector._allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
-                images = await fdp.BeginProcessingFrames();
+                var images = await fdp.BeginProcessingFrames();
 
                 if (images == null)
                 {
@@ -194,9 +218,20 @@ namespace GrowPea.Droid
                 else
                 {
                     Showpopup("Smiles processed :)!", ToastLength.Short);
-                    result = await fdp.BeginMakeBufferVideo(images);
+                    var fileresult = await fdp.BeginMakeBufferVideo(images);
 
-                    Showpopup(result ? "Video Created :)!" : "Error with video (!", ToastLength.Short);
+                    if (File.Exists(fileresult))
+                    {
+                        Showpopup( "Video Created, Press Play!!!", ToastLength.Short);
+                        _currentfilepath = fileresult;
+                        mPlaybutton.Enabled = true;
+                    }
+                    else
+                    {
+                        Showpopup("Error with video(!", ToastLength.Short);
+                        _currentfilepath = null;
+                        mPlaybutton.Enabled = false;
+                    }
                 }
             }
             else

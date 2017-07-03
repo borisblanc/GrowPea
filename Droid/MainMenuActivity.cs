@@ -7,6 +7,7 @@ using Android.Content.PM;
 using Mindscape.Raygun4Net;
 using Mindscape.Raygun4Net.Messages;
 
+
 namespace GrowPea.Droid
 {
     [Activity(Label = "SayCheese", MainLauncher = true, Icon = "@drawable/Cheese", ScreenOrientation = ScreenOrientation.Portrait)]

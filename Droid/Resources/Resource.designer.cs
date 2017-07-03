@@ -188,6 +188,9 @@ namespace GrowPea.Droid
 		public partial class Id
 		{
 			
+			// aapt resource value: 0x7f080010
+			public const int VideoView = 2131230736;
+			
 			// aapt resource value: 0x7f080000
 			public const int adjust_height = 2131230720;
 			
@@ -197,20 +200,23 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f080006
 			public const int auto = 2131230726;
 			
-			// aapt resource value: 0x7f08000d
-			public const int btnRecord = 2131230733;
+			// aapt resource value: 0x7f08000f
+			public const int btnPlay = 2131230735;
 			
 			// aapt resource value: 0x7f08000e
-			public const int btn_VideoActivity = 2131230734;
+			public const int btnRecord = 2131230734;
 			
-			// aapt resource value: 0x7f08000c
-			public const int btnswCam = 2131230732;
+			// aapt resource value: 0x7f080009
+			public const int btn_VideoActivity = 2131230729;
+			
+			// aapt resource value: 0x7f08000d
+			public const int btnswCam = 2131230733;
 			
 			// aapt resource value: 0x7f080007
 			public const int dark = 2131230727;
 			
-			// aapt resource value: 0x7f08000b
-			public const int faceOverlay = 2131230731;
+			// aapt resource value: 0x7f08000c
+			public const int faceOverlay = 2131230732;
 			
 			// aapt resource value: 0x7f080003
 			public const int icon_only = 2131230723;
@@ -221,14 +227,14 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f080002
 			public const int none = 2131230722;
 			
-			// aapt resource value: 0x7f08000a
-			public const int preview = 2131230730;
+			// aapt resource value: 0x7f08000b
+			public const int preview = 2131230731;
 			
 			// aapt resource value: 0x7f080004
 			public const int standard = 2131230724;
 			
-			// aapt resource value: 0x7f080009
-			public const int topLayout = 2131230729;
+			// aapt resource value: 0x7f08000a
+			public const int topLayout = 2131230730;
 			
 			// aapt resource value: 0x7f080005
 			public const int wide = 2131230725;
@@ -263,10 +269,13 @@ namespace GrowPea.Droid
 		{
 			
 			// aapt resource value: 0x7f040000
-			public const int Growsaic = 2130968576;
+			public const int MainMenu = 2130968576;
 			
 			// aapt resource value: 0x7f040001
-			public const int MainMenu = 2130968577;
+			public const int VideoCapture = 2130968577;
+			
+			// aapt resource value: 0x7f040002
+			public const int VideoView = 2130968578;
 			
 			static Layout()
 			{

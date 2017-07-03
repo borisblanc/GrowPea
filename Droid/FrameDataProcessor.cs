@@ -71,9 +71,9 @@ namespace GrowPea.Droid
             return result;
         }
 
-        public async Task<bool> BeginMakeBufferVideo(List<ByteBuffer> images)
+        public async Task<string> BeginMakeBufferVideo(List<ByteBuffer> images)
         {
-            Task<bool> t = new Task<bool>(() => MakeBufferVideo(images, DateTime.Now.Ticks.ToString()));
+            Task<string> t = new Task<string>(() => MakeBufferVideo(images, DateTime.Now.Ticks.ToString()));
             t.Start();
             return await t;
         }
@@ -149,7 +149,7 @@ namespace GrowPea.Droid
         }
 
 
-        public bool MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
+        public string MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
         {
             var Savelocation = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
 
@@ -170,7 +170,7 @@ namespace GrowPea.Droid
                 Log.Error(TAG, "MakeBufferVideo borked somehow", e);
                 throw;
             }
-            return true;
+            return outputfilepath;
         }
 
 

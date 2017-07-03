@@ -104,9 +104,12 @@
     <AndroidResource Include="Resources\layout\MainMenu.axml">
       <SubType>Designer</SubType>
     </AndroidResource>
+    <AndroidResource Include="Resources\layout\VideoView.axml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\layout\Growsaic.axml" />
+    <AndroidResource Include="Resources\layout\VideoCapture.axml" />
     <AndroidResource Include="Resources\values\Strings.xml" />
     <AndroidResource Include="Resources\mipmap-hdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-mdpi\Icon.png" />
