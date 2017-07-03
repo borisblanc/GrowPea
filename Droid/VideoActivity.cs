@@ -16,11 +16,11 @@ using Java.Nio;
 
 namespace GrowPea.Droid
 {
-    [Activity(Label = "Growsaic", ScreenOrientation = ScreenOrientation.Landscape)]
-    public class Growsaic : Activity
+    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape)]
+    public class VideoActivity : Activity
     {
 
-        private static readonly string TAG = "Growsaic";
+        private static readonly string TAG = "VideoActivity";
 
         private CameraSource mCameraSource = null;
 

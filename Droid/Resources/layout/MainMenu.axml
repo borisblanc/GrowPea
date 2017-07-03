@@ -8,10 +8,10 @@
     android:minWidth="25px"
     android:minHeight="25px">
     <Button
-        android:text="Growsaic"
+        android:text="Video Capture"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_Growsaic"
+        android:id="@+id/btn_VideoActivity"
         android:background="@color/common_google_signin_btn_text_dark_pressed"
         android:textColor="@color/common_google_signin_btn_text_dark_focused"
         android:height="250px"

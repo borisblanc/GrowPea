@@ -10,7 +10,7 @@ using Mindscape.Raygun4Net.Messages;
 namespace GrowPea.Droid
 {
     [Activity(Label = "SayCheese", MainLauncher = true, Icon = "@drawable/Cheese", ScreenOrientation = ScreenOrientation.Portrait)]
-    public class MainMenu : Activity
+    public class MainMenuActivity : Activity
     {
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -26,11 +26,11 @@ namespace GrowPea.Droid
             SetContentView(Resource.Layout.MainMenu);
             // Create your application here
 
-            var btnGrowsaic = FindViewById<Button>(Resource.Id.btn_Growsaic);
+            var btn_VideoActivity = FindViewById<Button>(Resource.Id.btn_VideoActivity);
 
-            btnGrowsaic.Click += (object sender, EventArgs e) =>
+            btn_VideoActivity.Click += (object sender, EventArgs e) =>
             {
-                var intent = new Intent(this, typeof(Growsaic));
+                var intent = new Intent(this, typeof(VideoActivity));
                 StartActivity(intent);
             };
 
