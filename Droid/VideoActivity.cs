@@ -202,7 +202,7 @@ namespace GrowPea.Droid
             {
 
                 _allFrameData = new SortedList<float, FrameData>();
-                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData);
+                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, pFramewidth, pFrameHeight);
 
                 //myFaceDetector.PropertyChanged += OnPropertyChanged;
 

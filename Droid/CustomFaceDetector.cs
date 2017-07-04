@@ -4,8 +4,7 @@ using Android.Gms.Vision.Faces;
 using Android.Gms.Vision;
 using Android.Util;
 using System.ComponentModel;
-
-
+using Android.Graphics;
 
 namespace GrowPea.Droid
 {
@@ -16,6 +15,9 @@ namespace GrowPea.Droid
         private SortedList<float, FrameData> _allFrameData;
 
         private bool _isRecording;
+
+        private int _width;
+        private int _height;
 
         //public bool isRecording
         //{
@@ -32,10 +34,12 @@ namespace GrowPea.Droid
 
         //public event PropertyChangedEventHandler PropertyChanged;
 
-        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData)
+        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData, int width, int height)
         {
             _detector = detector;
             _allFrameData = allFrameData;
+            _width = width;
+            _height = height;
         }
 
         public override SparseArray Detect(Frame frame)
@@ -44,16 +48,29 @@ namespace GrowPea.Droid
             //{
             //    isRecording = false;
             //}
+            try
+            {
+                var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
 
-            var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
-            var _frametimestamp = frame.GetMetadata().TimestampMillis;
+                byte[] b = new byte[_framebuff.Remaining()];
+                _framebuff.Get(b);
 
-            var detected = _detector.Detect(frame);
+                YuvImage yuvImage = new YuvImage(b, ImageFormatType.Nv21, _width, _height, null);
+                var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
-            if (!_allFrameData.ContainsKey(_frametimestamp))
-                _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, _framebuff, detected));
+                var detected = _detector.Detect(frame);
 
-            return detected;
+                if (!_allFrameData.ContainsKey(_frametimestamp))
+                    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, yuvImage, detected));
+
+                return detected;
+            }
+            catch (Exception e)
+            {
+                Log.Error("CustomFaceDetector", e.StackTrace);
+                return _detector.Detect(frame); //if processing fails return something
+            }
+
         }
 
 

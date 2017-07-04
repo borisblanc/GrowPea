@@ -1,5 +1,7 @@
 ﻿using Android.Util;
 using Java.Nio;
+using Android.Graphics;
+
 
 namespace GrowPea.Droid
 {
@@ -21,16 +23,16 @@ namespace GrowPea.Droid
 
     public class FrameData
     {
-        public ByteBuffer _bytebuff;
+        public YuvImage _yuv;
 
         public SparseArray _sparsearray;
 
         public float _timestamp;
 
-        public FrameData(float timestamp, ByteBuffer bytebuff, SparseArray sparsearray)
+        public FrameData(float timestamp, YuvImage yuv, SparseArray sparsearray)
         {
             _timestamp = timestamp;
-            _bytebuff = bytebuff;
+            _yuv = yuv;
             _sparsearray = sparsearray;
         }
     }

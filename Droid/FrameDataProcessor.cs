@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Exception = System.Exception;
 using Object = System.Object;
 using String = System.String;
+using Android.Graphics;
 
 
 namespace GrowPea.Droid
@@ -63,15 +64,15 @@ namespace GrowPea.Droid
             beststartindexes = new List<int>();
         }
 
-        public async Task<List<ByteBuffer>> BeginProcessingFrames()
+        public async Task<List<YuvImage>> BeginProcessingFrames()
         {
-            Task<List<ByteBuffer>> t = new Task<List<ByteBuffer>>(ProcessFrames);
+            Task<List<YuvImage>> t = new Task<List<YuvImage>>(ProcessFrames);
             t.Start();
             var result = await t;
             return result;
         }
 
-        public async Task<string> BeginMakeBufferVideo(List<ByteBuffer> images)
+        public async Task<string> BeginMakeBufferVideo(List<YuvImage> images)
         {
             Task<string> t = new Task<string>(() => MakeBufferVideo(images, DateTime.Now.Ticks.ToString()));
             t.Start();
@@ -80,7 +81,7 @@ namespace GrowPea.Droid
 
 
 
-        private List<ByteBuffer> ProcessFrames()
+        private List<YuvImage> ProcessFrames()
         {
             var coreframesavg = new Dictionary<int, double>();
             var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video 
@@ -117,7 +118,7 @@ namespace GrowPea.Droid
 
             var frameoffset = (GetFrameTotal() - coreframeslength) / 2; //will get offset to put coreframes in middle of total frames for entire video.
                 
-            return _allFrameData.GetRange(bestframegroupindex - frameoffset, GetFrameTotal() - frameoffset).Select(f => f._bytebuff).ToList();
+            return _allFrameData.GetRange(bestframegroupindex - frameoffset, GetFrameTotal() - frameoffset).Select(f => f._yuv).ToList();
         }
 
 
@@ -149,7 +150,7 @@ namespace GrowPea.Droid
         }
 
 
-        public string MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
+        public string MakeBufferVideo(List<YuvImage> imagesinfo, String filename)
         {
             var Savelocation = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
 

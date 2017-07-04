@@ -55,14 +55,14 @@ namespace GrowPea.Droid
 
     //  allocate one of these up front so we don't need to do it every time
 
-    private readonly List<ByteBuffer> _ByteBuffers;
+    private readonly List<YuvImage> _ByteBuffers;
 
     private static MediaCodecCapabilities _SelectedCodecColor;
 
     private static ImageFormatType _CameraColorFormat = ImageFormatType.Nv21; //ImageFormatType NV21 or YV12 should be the image formats all Android cameras save under ?nv21 should always work i think?
 
 
-    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<ByteBuffer> byteBuffers)
+    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<YuvImage> byteBuffers)
     {
         if ((width % 16) != 0 || (height % 16) != 0)
         {
@@ -270,9 +270,13 @@ namespace GrowPea.Droid
                                 //b.Recycle();
                                 //old way don't need to do this anymore?
 
-                                YuvImage yuv = GetYUVImage(imagedata);
+                                //int[] argb = new int[imagedata.Width * imagedata.Height];
+                                //imagedata.GetPixels(argb, 0, imagedata.Width, 0, 0, imagedata.Width, imagedata.Height);
+                                //byte[] yuv = new byte[imagedata.Width * imagedata.Height * 3 / 2];
+                                //encodeYUV420SP(yuv, argb, imagedata.Width, imagedata.Height);
+                                //YuvImage yuv = GetYUVImage(imagedata);
 
-                                var yuvarray = yuv.GetYuvData();
+                                var yuvarray = imagedata.GetYuvData();
 
                                 colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
 
@@ -471,43 +475,43 @@ namespace GrowPea.Droid
         return i420bytes;
     }
 
-        //private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
-        //{
-        //    int frameSize = width * height;
+        private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
+        {
+            int frameSize = width * height;
 
-        //    int yIndex = 0;
-        //    int uvIndex = frameSize;
+            int yIndex = 0;
+            int uvIndex = frameSize;
 
-        //    int R, G, B, Y, U, V;
-        //    int index = 0;
-        //    for (int j = 0; j < height; j++)
-        //    {
-        //        for (int i = 0; i < width; i++)
-        //        {
+            int R, G, B, Y, U, V;
+            int index = 0;
+            for (int j = 0; j < height; j++)
+            {
+                for (int i = 0; i < width; i++)
+                {
 
-        //            R = (argb[index] & 0xff0000) >> 16;
-        //            G = (argb[index] & 0xff00) >> 8;
-        //            B = (argb[index] & 0xff) >> 0;
+                    R = (argb[index] & 0xff0000) >> 16;
+                    G = (argb[index] & 0xff00) >> 8;
+                    B = (argb[index] & 0xff) >> 0;
 
-        //            // well known RGB to YUV algorithm
-        //            Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
-        //            U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
-        //            V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
+                    // well known RGB to YUV algorithm
+                    Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
+                    U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
+                    V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
 
-        //            // NV21 has a plane of Y and interleaved planes of VU each sampled by a factor of 2
-        //            //    meaning for every 4 Y pixels there are 1 V and 1 U.  Note the sampling is every other
-        //            //    pixel AND every other scanline.
-        //            yuv420sp[yIndex++] = (byte)((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
-        //            if (j % 2 == 0 && index % 2 == 0)
-        //            {
-        //                yuv420sp[uvIndex++] = (byte)((V < 0) ? 0 : ((V > 255) ? 255 : V));
-        //                yuv420sp[uvIndex++] = (byte)((U < 0) ? 0 : ((U > 255) ? 255 : U));
-        //            }
+                    // NV21 has a plane of Y and interleaved planes of VU each sampled by a factor of 2
+                    //    meaning for every 4 Y pixels there are 1 V and 1 U.  Note the sampling is every other
+                    //    pixel AND every other scanline.
+                    yuv420sp[yIndex++] = (byte)((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
+                    if (j % 2 == 0 && index % 2 == 0)
+                    {
+                        yuv420sp[uvIndex++] = (byte)((V < 0) ? 0 : ((V > 255) ? 255 : V));
+                        yuv420sp[uvIndex++] = (byte)((U < 0) ? 0 : ((U > 255) ? 255 : U));
+                    }
 
-        //            index++;
-        //        }
-        //    }
-        //}
+                    index++;
+                }
+            }
+        }
 
 
 
