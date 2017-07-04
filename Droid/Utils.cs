@@ -88,7 +88,7 @@ namespace GrowPea
         }
 
 
-        private static Bitmap GetBitmap(YuvImage yuvimage, int width, int height)
+        public static Bitmap GetBitmap(YuvImage yuvimage, int width, int height)
         {
             Bitmap b;
             try

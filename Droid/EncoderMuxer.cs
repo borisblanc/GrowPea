@@ -55,14 +55,14 @@ namespace GrowPea.Droid
 
     //  allocate one of these up front so we don't need to do it every time
 
-    private readonly List<YuvImage> _ByteBuffers;
+    private readonly List<ByteBuffer> _ByteBuffers;
 
     private static MediaCodecCapabilities _SelectedCodecColor;
 
     private static ImageFormatType _CameraColorFormat = ImageFormatType.Nv21; //ImageFormatType NV21 or YV12 should be the image formats all Android cameras save under ?nv21 should always work i think?
 
 
-    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<YuvImage> byteBuffers)
+    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<ByteBuffer> byteBuffers)
     {
         if ((width % 16) != 0 || (height % 16) != 0)
         {
@@ -276,7 +276,9 @@ namespace GrowPea.Droid
                                 //encodeYUV420SP(yuv, argb, imagedata.Width, imagedata.Height);
                                 //YuvImage yuv = GetYUVImage(imagedata);
 
-                                var yuvarray = imagedata.GetYuvData();
+                                YuvImage yuv = GetYUVImage(imagedata);
+
+                                var yuvarray = yuv.GetYuvData();
 
                                 colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
 

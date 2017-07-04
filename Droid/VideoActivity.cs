@@ -43,8 +43,8 @@ namespace GrowPea.Droid
 
         private bool isRecording = false;
 
-        private int pFramewidth = 1280; //eventually should be user driven and based on device capabilities
-        private int pFrameHeight = 720; //eventually should be user driven and based on device capabilities
+        private int pFramewidth = 640; //eventually should be user driven and based on device capabilities
+        private int pFrameHeight = 360; //eventually should be user driven and based on device capabilities
 
         private Single _recordFps = 60.0f;
         private int _createfps = 30;
@@ -202,7 +202,7 @@ namespace GrowPea.Droid
             {
 
                 _allFrameData = new SortedList<float, FrameData>();
-                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, pFramewidth, pFrameHeight);
+                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData);
 
                 //myFaceDetector.PropertyChanged += OnPropertyChanged;
 
