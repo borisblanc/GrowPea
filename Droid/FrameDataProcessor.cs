@@ -52,7 +52,7 @@ namespace GrowPea.Droid
             
         }
 
-        public FrameDataProcessor(SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds)
+        public FrameDataProcessor(ref SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds)
         {
             _allFrameData = allframedata.Select(f=> f.Value).ToList();
             _frameWidth = framewidth;
