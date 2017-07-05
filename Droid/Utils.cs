@@ -1,15 +1,20 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Android.Graphics;
 using Android.Util;
 using Java.Lang;
 using Java.Nio;
 using Exception = System.Exception;
-
+using System.IO.Compression;
+using GrowPea.Droid;
+using Object = System.Object;
 
 namespace GrowPea
 {
     public static class Utils
     {
+        private static readonly System.Object obj = new Object();
+
         public static ByteBuffer deepCopy(ByteBuffer orig)
         {
             int pos = orig.Position(), lim = orig.Limit();
@@ -108,6 +113,47 @@ namespace GrowPea
             }
 
             return b;
+        }
+
+        public static byte[] Compress(byte[] data)
+        {
+            using (var output = new MemoryStream())
+            {
+                using (var dstream = new DeflateStream(output, CompressionLevel.Optimal))
+                {
+                    dstream.Write(data, 0, data.Length);
+                }
+                return output.ToArray();
+            }
+        }
+
+        public static byte[] Decompress(byte[] data)
+        {
+            using (var input = new MemoryStream(data))
+            {
+                using (var output = new MemoryStream())
+                {
+                    using (var dstream = new DeflateStream(input, CompressionMode.Decompress))
+                    {
+                        dstream.CopyTo(output);
+                    }
+                    return output.ToArray();
+                }
+            }
+        }
+
+        public static void AddCompressedData(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
+        {
+            lock (obj)
+            {
+                var b = new byte[bytebuff.Remaining()];
+                bytebuff.Get(b);
+
+                byte[] compb = Utils.Compress(b);
+
+                if (!allframes.ContainsKey(timestamp))
+                    allframes.Add(timestamp, new FrameData(timestamp, compb, detected));
+            }
         }
 
 

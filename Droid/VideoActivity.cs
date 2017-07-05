@@ -11,6 +11,8 @@ using Android.Gms.Common;
 using Android.Content.PM;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.Hardware.Camera2;
 using Android.Hardware.Camera2.Params;
@@ -43,8 +45,8 @@ namespace GrowPea.Droid
 
         private bool isRecording = false;
 
-        private int pFramewidth = 640; //eventually should be user driven and based on device capabilities
-        private int pFrameHeight = 360; //eventually should be user driven and based on device capabilities
+        private int pFramewidth = 1280; //eventually should be user driven and based on device capabilities
+        private int pFrameHeight = 720; //eventually should be user driven and based on device capabilities
 
         private Single _recordFps = 60.0f;
         private int _createfps = 30;
@@ -57,6 +59,8 @@ namespace GrowPea.Droid
         private string _currentfilepath;
 
         private SortedList<float, FrameData> _allFrameData;
+
+        private List<Task> CompressDataTasks;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -104,7 +108,20 @@ namespace GrowPea.Droid
                 mRecbutton.SetTextColor(Color.Black);
                 mSwitchcamButton.Enabled = true;
 
-                StartFrameProcessing(); 
+
+
+
+                if (CompressDataTasks.Count >= framemin)
+                {
+                    Showpopup("Processing Smiles :)!", ToastLength.Short);
+                    Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
+                }
+                else
+                {
+                    Showpopup("Not enough frames try again..!", ToastLength.Short);
+                }
+
+                //StartFrameProcessing(); 
             }
         }
 
@@ -188,6 +205,9 @@ namespace GrowPea.Droid
         {
             //SetVideoSize(camface);
 
+            if (camface == CameraFacing.Front) //fixes darkness issues for front, may help back camera also
+                _recordFps = 30;
+
             var context = Application.Context;
 
             FaceDetector detector = new FaceDetector.Builder(context) //consider moving to background thread
@@ -202,7 +222,8 @@ namespace GrowPea.Droid
             {
 
                 _allFrameData = new SortedList<float, FrameData>();
-                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData);
+                CompressDataTasks = new List<Task>();
+                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks);
 
                 //myFaceDetector.PropertyChanged += OnPropertyChanged;
 
@@ -276,7 +297,7 @@ namespace GrowPea.Droid
         {
             try
             {
-                Showpopup("Processing Smiles :)!", ToastLength.Short);
+                //Showpopup("Processing Smiles :)!", ToastLength.Short);
 
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
@@ -285,30 +306,30 @@ namespace GrowPea.Droid
 
                     if (images == null)
                     {
-                        Showpopup("Error with Smiles processing :(!", ToastLength.Short);
+                        //Showpopup("Error with Smiles processing :(!", ToastLength.Short);
                     }
                     else
                     {
-                        Showpopup("Smiles processed :)!", ToastLength.Short);
+                        //Showpopup("Smiles processed :)!", ToastLength.Short);
                         var fileresult = await fdp.BeginMakeBufferVideo(images);
 
                         if (File.Exists(fileresult))
                         {
-                            Showpopup("Video Created, Press Play!!!", ToastLength.Short);
+                            //Showpopup("Video Created, Press Play!!!", ToastLength.Short);
                             _currentfilepath = fileresult;
-                            mPlaybutton.Enabled = true;
+                            //mPlaybutton.Enabled = true;
                         }
                         else
                         {
-                            Showpopup("Error with video(!", ToastLength.Short);
+                            //Showpopup("Error with video(!", ToastLength.Short);
                             _currentfilepath = null;
-                            mPlaybutton.Enabled = false;
+                            //mPlaybutton.Enabled = false;
                         }
                     }
                 }
                 else
                 {
-                    Showpopup("Need a longer video!! Try Again.", ToastLength.Short);
+                    //Showpopup("Need a longer video!! Try Again.", ToastLength.Short);
                 }
             }
             catch (Exception e)
@@ -320,10 +341,13 @@ namespace GrowPea.Droid
 
         private void Showpopup(string msg, ToastLength length)
         {
-            var toast = Toast.MakeText(this, msg, length);
-            toast.Show();
+            this.RunOnUiThread(() =>
+            {
+                var toast = Toast.MakeText(this, msg, length);
+                toast.Show();
+            });
         }
-            
+
 
         protected override void OnResume()
         {
@@ -368,7 +392,7 @@ namespace GrowPea.Droid
                 {
                     mPreview.Start(mCameraSource, mGraphicOverlay);
                 }
-                catch (System.Exception e)
+                catch (Exception e)
                 {
                     Log.Error(TAG, "Unable to start camera source.", e);
                     mCameraSource.Release();

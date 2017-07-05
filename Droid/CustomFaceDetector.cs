@@ -4,7 +4,8 @@ using Android.Gms.Vision.Faces;
 using Android.Gms.Vision;
 using Android.Util;
 using System.ComponentModel;
-
+using System.Threading.Tasks;
+using Android.Text.Method;
 
 
 namespace GrowPea.Droid
@@ -14,6 +15,8 @@ namespace GrowPea.Droid
         private FaceDetector _detector;
 
         private SortedList<float, FrameData> _allFrameData;
+
+        private List<Task> _compressDataTasks;
 
         //private bool _isRecording;
 
@@ -32,27 +35,30 @@ namespace GrowPea.Droid
 
         //public event PropertyChangedEventHandler PropertyChanged;
 
-        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData)
+        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData, ref List<Task> CompressDataTasks)
         {
             _detector = detector;
             _allFrameData = allFrameData;
+            _compressDataTasks = CompressDataTasks;
         }
 
         public override SparseArray Detect(Frame frame)
         {
             try
             {
-                var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
-                var _frametimestamp = frame.GetMetadata().TimestampMillis;
+
+
 
                 var detected = _detector.Detect(frame);
 
-                if (!_allFrameData.ContainsKey(_frametimestamp))
-                    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, _framebuff, detected));
+                var _framebuff = Utils.deepCopy(frame.GrayscaleImageData); //must copy buffer right away before it gets overriden VERY IMPORTANT
+                var _frametimestamp = frame.GetMetadata().TimestampMillis;
+
+                _compressDataTasks.Add(Task.Run(() => Utils.AddCompressedData(ref _allFrameData, _framebuff, _frametimestamp, detected)));
 
                 return detected;
             }
-            catch
+            catch(Exception e)
             {
                 return _detector.Detect(frame);
             }

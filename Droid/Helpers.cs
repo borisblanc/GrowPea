@@ -23,13 +23,13 @@ namespace GrowPea.Droid
 
     public class FrameData
     {
-        public ByteBuffer _yuv;
+        public byte[] _yuv;
 
         public SparseArray _sparsearray;
 
         public float _timestamp;
 
-        public FrameData(float timestamp, ByteBuffer yuv, SparseArray sparsearray)
+        public FrameData(float timestamp, byte[] yuv, SparseArray sparsearray)
         {
             _timestamp = timestamp;
             _yuv = yuv;

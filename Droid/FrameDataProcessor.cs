@@ -64,15 +64,15 @@ namespace GrowPea.Droid
             beststartindexes = new List<int>();
         }
 
-        public async Task<List<ByteBuffer>> BeginProcessingFrames()
+        public async Task<List<byte[]>> BeginProcessingFrames()
         {
-            Task<List<ByteBuffer>> t = new Task<List<ByteBuffer>>(ProcessFrames);
+            Task<List<byte[]>> t = new Task<List<byte[]>>(ProcessFrames);
             t.Start();
             var result = await t;
             return result;
         }
 
-        public async Task<string> BeginMakeBufferVideo(List<ByteBuffer> images)
+        public async Task<string> BeginMakeBufferVideo(List<byte[]> images)
         {
             Task<string> t = new Task<string>(() => MakeBufferVideo(images, DateTime.Now.Ticks.ToString()));
             t.Start();
@@ -81,7 +81,7 @@ namespace GrowPea.Droid
 
 
 
-        private List<ByteBuffer> ProcessFrames()
+        private List<byte[]> ProcessFrames()
         {
             var coreframesavg = new Dictionary<int, double>();
             var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video 
@@ -150,7 +150,7 @@ namespace GrowPea.Droid
         }
 
 
-        public string MakeBufferVideo(List<ByteBuffer> imagesinfo, String filename)
+        public string MakeBufferVideo(List<byte[]> imagesinfo, String filename)
         {
             var Savelocation = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
 
