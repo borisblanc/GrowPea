@@ -275,7 +275,7 @@ namespace GrowPea.Droid
                                 //byte[] yuv = new byte[imagedata.Width * imagedata.Height * 3 / 2];
                                 //encodeYUV420SP(yuv, argb, imagedata.Width, imagedata.Height);
                                 //YuvImage yuv = GetYUVImage(imagedata);
-                                byte[] decomB = Utils.Decompress(imagedata);
+                                byte[] decomB = Utils.DecompressFast(imagedata);
                                 var yuv = new YuvImage(decomB, _CameraColorFormat, _Width, _Height, null);
 
                                 var yuvarray = yuv.GetYuvData();

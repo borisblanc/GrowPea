@@ -149,10 +149,37 @@ namespace GrowPea
                 var b = new byte[bytebuff.Remaining()];
                 bytebuff.Get(b);
 
-                byte[] compb = Utils.Compress(b);
+                byte[] compb = Utils.CompressFast(b);
 
                 if (!allframes.ContainsKey(timestamp))
                     allframes.Add(timestamp, new FrameData(timestamp, compb, detected));
+            }
+        }
+
+        public static byte[] CompressFast(byte[] raw)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                using (GZipStream gzip = new GZipStream(memory, CompressionLevel.Fastest))
+                {
+                    gzip.Write(raw, 0, raw.Length);
+                }
+                return memory.ToArray();
+            }
+        }
+
+        public static byte[] DecompressFast(byte[] data)
+        {
+            using (var input = new MemoryStream(data))
+            {
+                using (var output = new MemoryStream())
+                {
+                    using (var gzip = new GZipStream(input, CompressionMode.Decompress))
+                    {
+                        gzip.CopyTo(output);
+                    }
+                    return output.ToArray();
+                }
             }
         }
 
