@@ -111,17 +111,17 @@ namespace GrowPea.Droid
 
 
 
-                if (CompressDataTasks.Count >= framemin)
-                {
-                    Showpopup("Processing Smiles :)!", ToastLength.Short);
-                    Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
-                }
-                else
-                {
-                    Showpopup("Not enough frames try again..!", ToastLength.Short);
-                }
+                //if (CompressDataTasks.Count >= framemin)
+                //{
+                //    Showpopup("Processing Smiles :)!", ToastLength.Short);
+                //    Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
+                //}
+                //else
+                //{
+                //    Showpopup("Not enough frames try again..!", ToastLength.Short);
+                //}
 
-                //StartFrameProcessing(); 
+                StartFrameProcessing(); 
             }
         }
 
@@ -297,7 +297,7 @@ namespace GrowPea.Droid
         {
             try
             {
-                //Showpopup("Processing Smiles :)!", ToastLength.Short);
+                Showpopup("Processing Smiles :)!", ToastLength.Short);
 
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
@@ -306,30 +306,30 @@ namespace GrowPea.Droid
 
                     if (images == null)
                     {
-                        //Showpopup("Error with Smiles processing :(!", ToastLength.Short);
+                        Showpopup("Error with Smiles processing :(!", ToastLength.Short);
                     }
                     else
                     {
-                        //Showpopup("Smiles processed :)!", ToastLength.Short);
+                        Showpopup("Smiles processed :)!", ToastLength.Short);
                         var fileresult = await fdp.BeginMakeBufferVideo(images);
 
                         if (File.Exists(fileresult))
                         {
-                            //Showpopup("Video Created, Press Play!!!", ToastLength.Short);
+                            Showpopup("Video Created, Press Play!!!", ToastLength.Short);
                             _currentfilepath = fileresult;
-                            //mPlaybutton.Enabled = true;
+                            mPlaybutton.Enabled = true;
                         }
                         else
                         {
-                            //Showpopup("Error with video(!", ToastLength.Short);
+                            Showpopup("Error with video(!", ToastLength.Short);
                             _currentfilepath = null;
-                            //mPlaybutton.Enabled = false;
+                            mPlaybutton.Enabled = false;
                         }
                     }
                 }
                 else
                 {
-                    //Showpopup("Need a longer video!! Try Again.", ToastLength.Short);
+                    Showpopup("Need a longer video!! Try Again.", ToastLength.Short);
                 }
             }
             catch (Exception e)
