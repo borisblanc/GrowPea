@@ -142,19 +142,35 @@ namespace GrowPea
             }
         }
 
-        //public static void AddCompressedData(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
-        //{
-        //    lock (obj)
-        //    {
-        //        var b = new byte[bytebuff.Remaining()];
-        //        bytebuff.Get(b);
+        public static void AddConvertByteBuffer(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
+        {
+            lock (obj)
+            {
+                var b = new byte[bytebuff.Remaining()];
+                bytebuff.Get(b);
 
-        //        byte[] compb = Utils.CompressFast(b);
+                //byte[] compb = Utils.CompressFast(b);
 
-        //        if (!allframes.ContainsKey(timestamp))
-        //            allframes.Add(timestamp, new FrameData(timestamp, compb, detected));
-        //    }
-        //}
+                if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
+                    allframes.Add(timestamp, new FrameData(timestamp, b, detected));
+
+                //allframes.Add(timestamp, new FrameData(timestamp, new byte[0], detected));
+            }
+        }
+
+        public static void AddCompressedData(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
+        {
+            lock (obj)
+            {
+                var b = new byte[bytebuff.Remaining()];
+                bytebuff.Get(b);
+
+                byte[] compb = Utils.CompressFast(b);
+
+                if (!allframes.ContainsKey(timestamp))
+                    allframes.Add(timestamp, new FrameData(timestamp, compb, detected));
+            }
+        }
 
         public static byte[] CompressFast(byte[] raw)
         {

@@ -15,25 +15,32 @@ namespace GrowPea.Droid
     {
         protected override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate(savedInstanceState);
-            RaygunClient.Initialize("3amrQKpbXz5tMRZ1yoGgQw==").AttachCrashReporting().AttachPulse(this);
-
-            RaygunClient.Current.UserInfo = new RaygunIdentifierMessage("borisblanc@gmail.com")
+            try
             {
-                FirstName = "Boris",
-                FullName = "BR",
-            };
+                base.OnCreate(savedInstanceState);
+                RaygunClient.Initialize("3amrQKpbXz5tMRZ1yoGgQw==").AttachCrashReporting().AttachPulse(this);
 
-            SetContentView(Resource.Layout.MainMenu);
-            // Create your application here
+                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage("borisblanc@gmail.com")
+                {
+                    FirstName = "Boris",
+                    FullName = "BR",
+                };
 
-            var btn_VideoActivity = FindViewById<Button>(Resource.Id.btn_VideoActivity);
+                SetContentView(Resource.Layout.MainMenu);
+                // Create your application here
 
-            btn_VideoActivity.Click += (object sender, EventArgs e) =>
+                var btn_VideoActivity = FindViewById<Button>(Resource.Id.btn_VideoActivity);
+
+                btn_VideoActivity.Click += (object sender, EventArgs e) =>
+                {
+                    var intent = new Intent(this, typeof(VideoActivity));
+                    StartActivity(intent);
+                };
+            }
+            catch(Exception e)
             {
-                var intent = new Intent(this, typeof(VideoActivity));
-                StartActivity(intent);
-            };
+                
+            }
 
             //throw new InvalidOperationException("raygun bullshit");
         }

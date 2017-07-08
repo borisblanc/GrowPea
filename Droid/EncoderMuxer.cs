@@ -286,6 +286,8 @@ namespace GrowPea.Droid
                                 inputBuf.Put(yuvarray);
 
                                 chunkSize = yuvarray.Length;
+                                //yuv = null;
+                                GC.Collect(); //essential to fix memory leak from new YuvImage allocation above
                             }
 
 

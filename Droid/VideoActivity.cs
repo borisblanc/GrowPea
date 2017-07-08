@@ -64,26 +64,34 @@ namespace GrowPea.Droid
 
         protected override void OnCreate(Bundle bundle)
         {
-            base.OnCreate(bundle);
-            this.RequestWindowFeature(WindowFeatures.NoTitle);
+            try
+            {
+                base.OnCreate(bundle);
+                this.RequestWindowFeature(WindowFeatures.NoTitle);
 
-            this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
-            
-            // Set our view from the "main" layout resource
-            SetContentView(Resource.Layout.VideoCapture);
+                this.Window.AddFlags(Android.Views.WindowManagerFlags.Fullscreen);
 
-            mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
-            mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
-            mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
-            mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
-            mPlaybutton = FindViewById<Button>(Resource.Id.btnPlay);
+                // Set our view from the "main" layout resource
+                SetContentView(Resource.Layout.VideoCapture);
 
-            mRecbutton.Click += (sender, e) => ToggleRecording();
-            mSwitchcamButton.Click += (sender, e) => ToggleCamface();
-            mPlaybutton.Click += (sender, e) => OpenVideo();
-            mPlaybutton.Enabled = _currentfilepath != null;
+                mPreview = FindViewById<CameraSourcePreview>(Resource.Id.preview);
+                mGraphicOverlay = FindViewById<GraphicOverlay>(Resource.Id.faceOverlay);
+                mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
+                mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
+                mPlaybutton = FindViewById<Button>(Resource.Id.btnPlay);
 
-            CreateCameraSource(false);
+                mRecbutton.Click += (sender, e) => ToggleRecording();
+                mSwitchcamButton.Click += (sender, e) => ToggleCamface();
+                mPlaybutton.Click += (sender, e) => OpenVideo();
+                mPlaybutton.Enabled = _currentfilepath != null;
+
+                SetVideoSize(camface);
+                CreateCameraSource(false);
+            }
+            catch (Exception e)
+            {
+                
+            }
         }
 
 
@@ -109,19 +117,13 @@ namespace GrowPea.Droid
                 mSwitchcamButton.Enabled = true;
 
 
+                if (CompressDataTasks.Count >= _allFrameData.Count)
+                {
+                    Showpopup("Processing Smiles :)!", ToastLength.Short);
+                    Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
+                }
 
-
-                //if (CompressDataTasks.Count >= framemin)
-                //{
-                //    Showpopup("Processing Smiles :)!", ToastLength.Short);
-                //    Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
-                //}
-                //else
-                //{
-                //    Showpopup("Not enough frames try again..!", ToastLength.Short);
-                //}
-
-                StartFrameProcessing(); 
+                //StartFrameProcessing(); 
             }
         }
 
@@ -170,41 +172,40 @@ namespace GrowPea.Droid
         }
 
         //this should ultimately be user driven like google photos can recycle code below later to find out hardware capabilites when giving users options
-        //private void SetVideoSize(CameraFacing camface) //determines cameras supported sizes and sets frame sizes for video as best as possible
-        //{
-        //    CameraManager manager = (CameraManager)GetSystemService(Context.CameraService);
-        //    var cams = manager.GetCameraIdList();
+        private void SetVideoSize(CameraFacing camface) //determines cameras supported sizes and sets frame sizes for video as best as possible
+        {
+            CameraManager manager = (CameraManager)GetSystemService(Context.CameraService);
+            var cams = manager.GetCameraIdList();
 
-        //    LensFacing lensface = camface == CameraFacing.Back ? LensFacing.Back : LensFacing.Front;
+            LensFacing lensface = camface == CameraFacing.Back ? LensFacing.Back : LensFacing.Front;
 
-        //    foreach (var camid in cams)
-        //    {
-        //        var camprops = manager.GetCameraCharacteristics(camid);
+            foreach (var camid in cams)
+            {
+                var camprops = manager.GetCameraCharacteristics(camid);
 
-        //        if ((int)camprops.Get(CameraCharacteristics.LensFacing) == (int) lensface)
-        //        {
-        //            var map = (StreamConfigurationMap)camprops.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-        //            Size[] sizes = map.GetOutputSizes((int)ImageFormatType.Jpeg);
-        //            if (sizes.ToList().Any(s => s.Width == 1280 && s.Height == 720)) //if this format is supported then always use it, this is 16:9 aspect HD
-        //            {
-        //                pFramewidth = 1280;
-        //                pFrameHeight = 720;
-        //            }
-        //            else //if (sizes.ToList().Any(s => s.Width == 640 && s.Height == 480)) //if HD is not supported use this default
-        //            {//if HD is not supported use this default
-        //                pFramewidth = 640;
-        //                pFrameHeight = 480;
-        //            }
-        //        }
-        //    }
+                if ((int)camprops.Get(CameraCharacteristics.LensFacing) == (int)lensface)
+                {
+                    var map = (StreamConfigurationMap)camprops.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
+                    Size[] sizes = map.GetOutputSizes((int)ImageFormatType.Jpeg);
+                    if (sizes.ToList().Any(s => s.Width == 1280 && s.Height == 720)) //if this format is supported then always use it, this is 16:9 aspect HD
+                    {
+                        pFramewidth = 1280;
+                        pFrameHeight = 720;
+                    }
+                    else //if (sizes.ToList().Any(s => s.Width == 640 && s.Height == 480)) //if HD is not supported use this default
+                    {//if HD is not supported use this default
+                        pFramewidth = 640;
+                        pFrameHeight = 480;
+                    }
+                }
+            }
 
-        //}
+        }
 
 
         private void CreateCameraSource(bool usecustomdetector)
         {
-            //SetVideoSize(camface);
-
+            
             if (camface == CameraFacing.Front) //fixes darkness issues for front, may help back camera also
                 _recordFps = 30;
 
@@ -221,31 +222,38 @@ namespace GrowPea.Droid
             if (usecustomdetector)
             {
 
-                _allFrameData = new SortedList<float, FrameData>();
-                CompressDataTasks = new List<Task>();
-                var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks);
-
-                //myFaceDetector.PropertyChanged += OnPropertyChanged;
-
-                myFaceDetector.SetProcessor(
-                    new LargestFaceFocusingProcessor.Builder(myFaceDetector,
-                            new GraphicFaceTracker(this.mGraphicOverlay))
-                        .Build());
-
-                if (!myFaceDetector.IsOperational)
+                try
                 {
-                    // isOperational() can be used to check if the required native library is currently
-                    // available.  The detector will automatically become operational once the library
-                    // download completes on device.
-                    Log.Warn(TAG, "Face detector dependencies are not yet available.");
-                }
+                    _allFrameData = new SortedList<float, FrameData>();
+                    CompressDataTasks = new List<Task>();
+                    var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks);
 
-                mCameraSource = new CameraSource.Builder(context, myFaceDetector)
-                    .SetRequestedPreviewSize(pFramewidth, pFrameHeight)
-                    .SetFacing(camface)
-                    .SetRequestedFps(_recordFps)
-                    .SetAutoFocusEnabled(true)
-                    .Build();
+                    //myFaceDetector.PropertyChanged += OnPropertyChanged;
+
+                    myFaceDetector.SetProcessor(
+                        new LargestFaceFocusingProcessor.Builder(myFaceDetector,
+                                new GraphicFaceTracker(this.mGraphicOverlay))
+                            .Build());
+
+                    if (!myFaceDetector.IsOperational)
+                    {
+                        // isOperational() can be used to check if the required native library is currently
+                        // available.  The detector will automatically become operational once the library
+                        // download completes on device.
+                        Log.Warn(TAG, "Face detector dependencies are not yet available.");
+                    }
+
+                    mCameraSource = new CameraSource.Builder(context, myFaceDetector)
+                        .SetRequestedPreviewSize(pFramewidth, pFrameHeight)
+                        .SetFacing(camface)
+                        .SetRequestedFps(_recordFps)
+                        .SetAutoFocusEnabled(true)
+                        .Build();
+                }
+                catch (Exception e)
+                {
+                    
+                }
             }
             else
             {
@@ -271,27 +279,6 @@ namespace GrowPea.Droid
             }
         }
 
-        //private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
-        //{
-        //    if (e.PropertyName == "isRecording" && !myFaceDetector.isRecording)
-        //    {
-        //        isRecording = false;
-        //        mGraphicOverlay.isRecording = false;
-        //        this.RunOnUiThread(() => //can only do this on UI thread
-        //        {
-        //            mRecbutton.Text = "RECORD";
-        //            mRecbutton.SetTextColor(Color.Black);
-
-        //            Toast toast = Toast.MakeText(this, "Smiles Captured :)!", ToastLength.Short);
-        //            toast.Show();
-        //        });
-
-        //        //if (myFaceDetector._allFrameData.Count > 0)
-        //        //{
-        //        //    StartFrameProcessing();
-        //        //}
-        //    }
-        //}
 
         private async void StartFrameProcessing()
         {
@@ -317,13 +304,13 @@ namespace GrowPea.Droid
                         {
                             Showpopup("Video Created, Press Play!!!", ToastLength.Short);
                             _currentfilepath = fileresult;
-                            mPlaybutton.Enabled = true;
+                            TogglePlay(true);
                         }
                         else
                         {
                             Showpopup("Error with video(!", ToastLength.Short);
                             _currentfilepath = null;
-                            mPlaybutton.Enabled = false;
+                            TogglePlay(false);
                         }
                     }
                 }
@@ -337,6 +324,14 @@ namespace GrowPea.Droid
                 
                 throw;
             }
+        }
+
+        private void TogglePlay(bool toggle)
+        {
+            this.RunOnUiThread(() =>
+            {
+                mPlaybutton.Enabled = toggle;
+            });
         }
 
         private void Showpopup(string msg, ToastLength length)
