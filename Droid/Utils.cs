@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Android.Graphics;
 using Android.Util;
@@ -144,17 +145,27 @@ namespace GrowPea
 
         public static void AddConvertByteBuffer(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
         {
-            lock (obj)
+            try
             {
-                var b = new byte[bytebuff.Remaining()];
-                bytebuff.Get(b);
 
-                //byte[] compb = Utils.CompressFast(b);
 
-                if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
-                    allframes.Add(timestamp, new FrameData(timestamp, b, detected));
 
-                //allframes.Add(timestamp, new FrameData(timestamp, new byte[0], detected));
+                lock (obj)
+                {
+                    var b = new byte[bytebuff.Remaining()];
+                    bytebuff.Get(b);
+
+                    //byte[] compb = Utils.CompressFast(b);
+
+                    if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
+                        allframes.Add(timestamp, new FrameData(timestamp, b, detected));
+
+                    //allframes.Add(timestamp, new FrameData(timestamp, new byte[0], detected));
+                }
+            }
+            catch (Exception e)
+            {
+                var x = e;
             }
         }
 
