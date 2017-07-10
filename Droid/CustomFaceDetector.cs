@@ -50,18 +50,18 @@ namespace GrowPea.Droid
 
                 var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
-                var b = new byte[_framebuff.Remaining()];
-                _framebuff.Get(b); //substitute for deepcopy below
+                //var b = new byte[_framebuff.Remaining()];
+                //_framebuff.Get(b); //substitute for deepcopy below
 
                 var detected = _detector.Detect(frame);
 
                 //Utils.deepCopy(frame.GrayscaleImageData); this is what causes oom issues but also what makes it all work??
 
 
-                //_compressDataTasks.Add(Task.Run(() => Utils.AddConvertByteBuffer(ref _allFrameData, _framebuff, _frametimestamp, detected)));
+                _compressDataTasks.Add(Task.Run(() => Utils.AddConvertByteBuffer(ref _allFrameData, _framebuff, _frametimestamp, detected)));
 
-                if (!_allFrameData.ContainsKey(_frametimestamp))
-                    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, b, detected));
+                //if (!_allFrameData.ContainsKey(_frametimestamp))
+                //    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, b, detected));
 
                 return detected;
             }

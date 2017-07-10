@@ -117,14 +117,23 @@ namespace GrowPea.Droid
                 mSwitchcamButton.Enabled = true;
 
 
-                if (CompressDataTasks.Count >= _allFrameData.Count)
+                if (CompressDataTasks.Count > _allFrameData.Count)
                 {
-                    Showpopup("Processing Smiles :)!", ToastLength.Short);
                     Task.Factory.ContinueWhenAll(CompressDataTasks.ToArray(), result => { StartFrameProcessing(); });
                 }
+                else
+                {
+                    StartFrameProcessing();
+                }
 
-                //StartFrameProcessing(); 
             }
+        }
+
+        private void ReleaseVideoMemory() //must always call this after done processing videos
+        {
+            _allFrameData = null;
+            CompressDataTasks = null;
+            GC.Collect();
         }
 
         private void ToggleCamface()
@@ -226,6 +235,7 @@ namespace GrowPea.Droid
                 {
                     _allFrameData = new SortedList<float, FrameData>();
                     CompressDataTasks = new List<Task>();
+
                     var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks);
 
                     //myFaceDetector.PropertyChanged += OnPropertyChanged;
@@ -323,6 +333,10 @@ namespace GrowPea.Droid
             {
                 
                 throw;
+            }
+            finally
+            {
+                ReleaseVideoMemory();
             }
         }
 
