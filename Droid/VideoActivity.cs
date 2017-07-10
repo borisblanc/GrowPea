@@ -62,6 +62,8 @@ namespace GrowPea.Droid
 
         private List<Task> CompressDataTasks;
 
+        private List<EncodedforMux> formuxer;
+
         protected override void OnCreate(Bundle bundle)
         {
             try
@@ -87,6 +89,7 @@ namespace GrowPea.Droid
 
                 SetVideoSize(camface);
                 CreateCameraSource(false);
+                formuxer = new List<EncodedforMux>();
             }
             catch (Exception e)
             {
@@ -133,6 +136,7 @@ namespace GrowPea.Droid
         {
             _allFrameData = null;
             CompressDataTasks = null;
+            //formuxer = null;
             GC.Collect();
         }
 
@@ -298,8 +302,10 @@ namespace GrowPea.Droid
 
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
-                    var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
-                    var images = await fdp.BeginProcessingFrames();
+                    var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds, ref formuxer);
+                    //var images = await fdp.BeginProcessingFrames();
+                    List<byte[]> images = _allFrameData.Select(f => f.Value._yuv).ToList();
+
 
                     if (images == null)
                     {

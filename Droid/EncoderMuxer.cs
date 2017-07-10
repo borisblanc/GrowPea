@@ -57,12 +57,14 @@ namespace GrowPea.Droid
 
     private readonly List<byte[]> _ByteBuffers;
 
+    private List<EncodedforMux> _formuxer;
+
     private static MediaCodecCapabilities _SelectedCodecColor;
 
     private static ImageFormatType _CameraColorFormat = ImageFormatType.Nv21; //ImageFormatType NV21 or YV12 should be the image formats all Android cameras save under ?nv21 should always work i think?
 
 
-    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<byte[]> byteBuffers)
+    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<byte[]> byteBuffers, List<EncodedforMux> formuxer)
     {
         if ((width % 16) != 0 || (height % 16) != 0)
         {
@@ -74,6 +76,7 @@ namespace GrowPea.Droid
         _Filepath = oFilePath;
         _ByteBuffers = byteBuffers;
         _frameRate = framerate;
+        _formuxer = formuxer;
     }
 
     public void EncodeVideoToMp4()
@@ -306,7 +309,7 @@ namespace GrowPea.Droid
                 }
 
                 ByteBuffer[] encoderOutputBuffers = _Encoder.GetOutputBuffers();
-                MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
+                var mBufferInfo = new MediaCodec.BufferInfo();
 
                 int encoderStatus = _Encoder.DequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
 
@@ -369,6 +372,7 @@ namespace GrowPea.Droid
                         //encodedData.Position(mBufferInfo.Offset);
                         //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
+                        _formuxer.Add(new EncodedforMux( _TrackIndex, encodedData, mBufferInfo));
                         _Muxer.WriteSampleData(_TrackIndex, encodedData, mBufferInfo);
                         Log.Info(TAG, string.Format("{0} bytes to muxer", mBufferInfo.Size));
                     }

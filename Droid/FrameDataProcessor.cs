@@ -17,7 +17,7 @@ namespace GrowPea.Droid
     {
         private static readonly string TAG = "FrameDataProcessor";
 
-        public List<BmFace> ALLFaces;
+
         private List<FrameData> _allFrameData;
 
         private readonly int _frameWidth;
@@ -32,6 +32,9 @@ namespace GrowPea.Droid
         private int _vidlengthseconds;
 
         public List<int> beststartindexes;
+
+
+        private List<EncodedforMux> _formuxer;
 
         private int bitRate
         {
@@ -53,15 +56,17 @@ namespace GrowPea.Droid
             
         }
 
-        public FrameDataProcessor(ref SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds)
+        public FrameDataProcessor(ref SortedList<float, FrameData> allframedata, int framewidth, int frameheight, int fps, int vidlengthseconds, ref List<EncodedforMux> formuxer)
         {
             _allFrameData = allframedata.Select(f=> f.Value).ToList();
             _frameWidth = framewidth;
             _frameHeight = frameheight;
             _fps = fps;
             _vidlengthseconds = vidlengthseconds;
-            ALLFaces = new List<BmFace>();
             beststartindexes = new List<int>();
+            _formuxer = formuxer;
+
+
         }
 
         public async Task<List<byte[]>> BeginProcessingFrames()
@@ -163,7 +168,7 @@ namespace GrowPea.Droid
 
             try
             {
-                var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, _fps, outputfilepath, imagesinfo);
+                var encoder = new EncoderMuxer(_frameWidth, _frameHeight, bitRate, _fps, outputfilepath, imagesinfo, _formuxer);
                 encoder.EncodeVideoToMp4();
             }
             catch(Exception e)

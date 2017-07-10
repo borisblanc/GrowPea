@@ -1,7 +1,7 @@
 ﻿using Android.Util;
 using Java.Nio;
 using Android.Graphics;
-
+using static Android.Media.MediaCodec;
 
 namespace GrowPea.Droid
 {
@@ -34,6 +34,22 @@ namespace GrowPea.Droid
             _timestamp = timestamp;
             _yuv = yuv;
             _sparsearray = sparsearray;
+        }
+    }
+
+    public class EncodedforMux
+    {
+        public ByteBuffer data;
+
+        public BufferInfo bufferinfo;
+
+        public int trackindex;
+
+        public EncodedforMux(int Trackindex, ByteBuffer Data, BufferInfo Buffinfo)
+        {
+            trackindex = Trackindex;
+            data = Data;
+            bufferinfo = Buffinfo;
         }
     }
 
