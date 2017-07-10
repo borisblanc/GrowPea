@@ -368,12 +368,16 @@ namespace GrowPea.Droid
                             throw new RuntimeException("muxer hasnt started");
                         }
 
-                        //  adjust the ByteBuffer values to match BufferInfo (not needed?) old
-                        //encodedData.Position(mBufferInfo.Offset);
-                        //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
+                            //  adjust the ByteBuffer values to match BufferInfo (not needed?) old
+                            //encodedData.Position(mBufferInfo.Offset);
+                            //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
-                        _formuxer.Add(new EncodedforMux( _TrackIndex, encodedData, mBufferInfo));
-                        _Muxer.WriteSampleData(_TrackIndex, encodedData, mBufferInfo);
+                        var b = new byte[encodedData.Remaining()];
+                        encodedData.Get(b);
+                        _formuxer.Add(new EncodedforMux( _TrackIndex, b, mBufferInfo));
+                        ByteBuffer buf = ByteBuffer.Wrap(b);
+
+                        _Muxer.WriteSampleData(_TrackIndex, buf, mBufferInfo);
                         Log.Info(TAG, string.Format("{0} bytes to muxer", mBufferInfo.Size));
                     }
 

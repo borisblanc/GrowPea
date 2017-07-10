@@ -39,13 +39,13 @@ namespace GrowPea.Droid
 
     public class EncodedforMux
     {
-        public ByteBuffer data;
+        public byte[] data;
 
         public BufferInfo bufferinfo;
 
         public int trackindex;
 
-        public EncodedforMux(int Trackindex, ByteBuffer Data, BufferInfo Buffinfo)
+        public EncodedforMux(int Trackindex, byte[] Data, BufferInfo Buffinfo)
         {
             trackindex = Trackindex;
             data = Data;
