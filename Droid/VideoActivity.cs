@@ -62,7 +62,7 @@ namespace GrowPea.Droid
 
         private List<Task> CompressDataTasks;
 
-        private int compressquality;
+        private int compressquality = 100; //tested ok for now with lossy jpeg compression default for now byt need to be user configurable
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -89,7 +89,6 @@ namespace GrowPea.Droid
 
                 SetVideoSize(camface);
                 CreateCameraSource(false);
-                compressquality = 70; //tested ok for now with lossy jpeg compression
             }
             catch (Exception e)
             {

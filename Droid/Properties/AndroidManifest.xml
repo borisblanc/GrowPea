@@ -7,5 +7,9 @@
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<application android:label="SayCheese" android:hardwareAccelerated="true" android:largeHeap="true" android:debuggable="true">
 		<meta-data android:name="com.google.android.gms.vision.DEPENDENCIES" android:value="barcode,face"></meta-data>
+    <activity
+         android:name=".FaceTrack"
+         android:screenOrientation="landscape" />
 	</application>
+
 </manifest>

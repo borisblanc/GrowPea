@@ -118,7 +118,7 @@ namespace GrowPea.Droid
 
             var frameoffset = (GetFrameTotal() - coreframeslength) / 2; //will get offset to put coreframes in middle of total frames for entire video.
 
-            if (frameoffset > bestframegroupindex)
+            if (frameoffset > bestframegroupindex) //fix for when best frame is at beggining of video
                 frameoffset = 0;
 
 
