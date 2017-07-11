@@ -264,33 +264,41 @@ namespace GrowPea.Droid
                             }
                             else
                             {
-                                //old way don't need to do this anymore.
-                                //Bitmap b = GetBitmap(imagedata);
-                                //byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
-                                //int[] argb = new int[b.Width * b.Height];
-                                //b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
-                                //encodeYUV420SP(yuv, argb, b.Width, b.Height);
-                                //b.Recycle();
-                                //old way don't need to do this anymore?
+                                    //old way don't need to do this anymore.
+                                    //Bitmap b = GetBitmap(imagedata);
+                                    //byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
+                                    //int[] argb = new int[b.Width * b.Height];
+                                    //b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                    //encodeYUV420SP(yuv, argb, b.Width, b.Height);
+                                    //b.Recycle();
+                                    //old way don't need to do this anymore?
 
-                                //int[] argb = new int[imagedata.Width * imagedata.Height];
-                                //imagedata.GetPixels(argb, 0, imagedata.Width, 0, 0, imagedata.Width, imagedata.Height);
-                                //byte[] yuv = new byte[imagedata.Width * imagedata.Height * 3 / 2];
-                                //encodeYUV420SP(yuv, argb, imagedata.Width, imagedata.Height);
-                                //YuvImage yuv = GetYUVImage(imagedata);
+                                    //int[] argb = new int[imagedata.Width * imagedata.Height];
+                                    //imagedata.GetPixels(argb, 0, imagedata.Width, 0, 0, imagedata.Width, imagedata.Height);
+                                    //byte[] yuv = new byte[imagedata.Width * imagedata.Height * 3 / 2];
+                                    //encodeYUV420SP(yuv, argb, imagedata.Width, imagedata.Height);
+                                    //YuvImage yuv = GetYUVImage(imagedata);
 
-                                //byte[] decomB = Utils.DecompressFast(imagedata);
-                                var yuv = new YuvImage(imagedata, _CameraColorFormat, _Width, _Height, null);
+                                    //byte[] decomB = Utils.DecompressFast(imagedata);
 
-                                var yuvarray = yuv.GetYuvData();
+                                    //var yuv = new YuvImage(decomB, _CameraColorFormat, _Width, _Height, null);
+                                    Bitmap b = BitmapFactory.DecodeByteArray(imagedata, 0, imagedata.Length);
+                                    byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
+                                    int[] argb = new int[b.Width * b.Height];
+                                    b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                    encodeYUV420SP(yuv, argb, b.Width, b.Height);
+                                    
 
-                                colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
+                                    //var yuvarray = yuv;
 
-                                inputBuf.Put(yuvarray);
+                                colorcorrection(ref yuv); //method for fixing common color matching issues see below for comments
 
-                                chunkSize = yuvarray.Length;
+                                inputBuf.Put(yuv);
+
+                                chunkSize = yuv.Length;
                                 //yuv = null;
-                                GC.Collect(); //essential to fix memory leak from new YuvImage allocation above
+                                //GC.Collect(); //essential to fix memory leak from new YuvImage allocation above
+                                    b.Recycle();
                             }
 
 
@@ -372,12 +380,12 @@ namespace GrowPea.Droid
                             //encodedData.Position(mBufferInfo.Offset);
                             //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
-                        var b = new byte[encodedData.Remaining()];
-                        encodedData.Get(b);
-                        _formuxer.Add(new EncodedforMux( _TrackIndex, b, mBufferInfo));
-                        ByteBuffer buf = ByteBuffer.Wrap(b);
+                        //var b = new byte[encodedData.Remaining()];
+                        //encodedData.Get(b);
+                        //_formuxer.Add(new EncodedforMux( _TrackIndex, b, mBufferInfo));
+                        //ByteBuffer buf = ByteBuffer.Wrap(b);
 
-                        _Muxer.WriteSampleData(_TrackIndex, buf, mBufferInfo);
+                        _Muxer.WriteSampleData(_TrackIndex, encodedData, mBufferInfo);
                         Log.Info(TAG, string.Format("{0} bytes to muxer", mBufferInfo.Size));
                     }
 

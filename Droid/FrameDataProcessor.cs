@@ -122,7 +122,11 @@ namespace GrowPea.Droid
             beststartindexes.Add(bestframegroupindex); //used if video is reparsed by user.
 
             var frameoffset = (GetFrameTotal() - coreframeslength) / 2; //will get offset to put coreframes in middle of total frames for entire video.
-                
+
+            if (frameoffset > bestframegroupindex)
+                frameoffset = 0;
+
+
             return _allFrameData.GetRange(bestframegroupindex - frameoffset, GetFrameTotal() - frameoffset).Select(f => f._yuv).ToList();
         }
 

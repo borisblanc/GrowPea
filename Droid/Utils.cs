@@ -148,19 +148,24 @@ namespace GrowPea
             try
             {
 
+                var b = new byte[bytebuff.Remaining()];
+                bytebuff.Get(b);
 
+                var yuv = new YuvImage(b, ImageFormatType.Nv21, 1280, 720, null);
+                byte[] jpegArray;
+                using (var baos = new MemoryStream())
+                {
+                    yuv.CompressToJpeg(new Rect(0, 0, 1280, 720), 60, baos); // Where 100 is the quality of the generated jpeg
+                    jpegArray = baos.ToArray();
+                    //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
+                    //b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
+                }
+                //byte[] compb = Utils.CompressFast(b);
 
                 lock (obj)
                 {
-                    var b = new byte[bytebuff.Remaining()];
-                    bytebuff.Get(b);
-
-                    //byte[] compb = Utils.CompressFast(b);
-
                     if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
-                        allframes.Add(timestamp, new FrameData(timestamp, b, detected));
-
-                    //allframes.Add(timestamp, new FrameData(timestamp, new byte[0], detected));
+                        allframes.Add(timestamp, new FrameData(timestamp, jpegArray, detected));
                 }
             }
             catch (Exception e)
