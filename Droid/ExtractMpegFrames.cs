@@ -29,11 +29,13 @@ using Android.Views;
 using Java.IO;
 using Java.Lang;
 using Java.Nio;
+using Console = System.Console;
 using Environment = Android.OS.Environment;
 using File = Java.IO.File;
 using FileNotFoundException = Java.IO.FileNotFoundException;
 using Object = System.Object;
 using String = System.String;
+
 
 
 //20131122: minor tweaks to saveFrame() I/O
@@ -61,7 +63,8 @@ namespace GrowPea.Droid
 
         // where to find files (note: requires WRITE_EXTERNAL_STORAGE permission)
         private static File FILES_DIR = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads);
-        private static String INPUT_FILE = "636353814605172920.mp4";
+
+        private static String INPUT_FILE;
 
 
 
@@ -125,13 +128,14 @@ namespace GrowPea.Droid
      * it by adjusting the GL viewport to get letterboxing or pillarboxing, but generally if
      * you're extracting frames you don't want black bars.
      */
-    public void extractMpegFrames() 
+    public void extractMpegFrames(string filename) 
     {
         MediaCodec decoder = null;
         CodecOutputSurface outputSurface = null;
         MediaExtractor extractor = null;
-        int saveWidth = 640;
-        int saveHeight = 480;
+        int saveWidth = 1280;
+        int saveHeight = 720;
+        INPUT_FILE = filename;
 
         try
         {
@@ -160,6 +164,7 @@ namespace GrowPea.Droid
             //}
 
             // Could use width/height from the MediaFormat to get full-size frames.
+
             outputSurface = new CodecOutputSurface(saveWidth, saveHeight);
 
             // Create a MediaCodec decoder, and configure it with the MediaFormat from the
@@ -394,29 +399,36 @@ namespace GrowPea.Droid
          */
         private void setup()
         {
-            mTextureRender = new STextureRender();
-            mTextureRender.surfaceCreated();
+            try
+            {
+                mTextureRender = new STextureRender();
+                mTextureRender.surfaceCreated();
 
-            //if (VERBOSE) Log.d(TAG, "textureID=" + mTextureRender.getTextureId());
-            mSurfaceTexture = new SurfaceTexture(mTextureRender.getTextureId());
+                //if (VERBOSE) Log.d(TAG, "textureID=" + mTextureRender.getTextureId());
+                mSurfaceTexture = new SurfaceTexture(mTextureRender.getTextureId());
 
-            // This doesn't work if this object is created on the thread that CTS started for
-            // these test cases.
-            //
-            // The CTS-created thread has a Looper, and the SurfaceTexture constructor will
-            // create a Handler that uses it.  The "frame available" message is delivered
-            // there, but since we're not a Looper-based thread we'll never see it.  For
-            // this to do anything useful, CodecOutputSurface must be created on a thread without
-            // a Looper, so that SurfaceTexture uses the main application Looper instead.
-            //
-            // Java language note: passing "this" out of a constructor is generally unwise,
-            // but we should be able to get away with it here.
-            mSurfaceTexture.SetOnFrameAvailableListener(this);
+                // This doesn't work if this object is created on the thread that CTS started for
+                // these test cases.
+                //
+                // The CTS-created thread has a Looper, and the SurfaceTexture constructor will
+                // create a Handler that uses it.  The "frame available" message is delivered
+                // there, but since we're not a Looper-based thread we'll never see it.  For
+                // this to do anything useful, CodecOutputSurface must be created on a thread without
+                // a Looper, so that SurfaceTexture uses the main application Looper instead.
+                //
+                // Java language note: passing "this" out of a constructor is generally unwise,
+                // but we should be able to get away with it here.
+                mSurfaceTexture.SetOnFrameAvailableListener(this);
 
-            mSurface = new Surface(mSurfaceTexture);
+                mSurface = new Surface(mSurfaceTexture);
 
-            mPixelBuf = ByteBuffer.AllocateDirect(mWidth * mHeight * 4);
-            mPixelBuf.Order(ByteOrder.LittleEndian);
+                mPixelBuf = ByteBuffer.AllocateDirect(mWidth * mHeight * 4);
+                mPixelBuf.Order(ByteOrder.LittleEndian);
+            }
+            catch (System.Exception e)
+            {
+                var x = e;
+            }
         }
 
         /**
@@ -537,31 +549,31 @@ namespace GrowPea.Droid
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void awaitNewImage()
         {
-            lock(mFrameSyncObject) 
+            Monitor.Enter(mFrameSyncObject);
+            try
             {
                 while (!mFrameAvailable)
                 {
-                    try
+                    
+                    // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
+                    // stalling the test if it doesn't arrive.
+                    Monitor.Wait(mFrameSyncObject, 2500);
+                    if (!mFrameAvailable)
                     {
-                        // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
-                        // stalling the test if it doesn't arrive.
-                        Monitor.Wait(mFrameSyncObject, 2500);
-                        if (!mFrameAvailable)
-                        {
-                            // TODO: if "spurious wakeup", continue while loop
-                            throw new RuntimeException("frame wait timed out");
-                        }
+                        // TODO: if "spurious wakeup", continue while loop
+                        throw new System.Exception("frame wait timed out");
                     }
-                    catch (InterruptedException ie)
-                    {
-                        // shouldn't happen
-                        throw new RuntimeException(ie);
-                    }
+                    
+
                 }
                 mFrameAvailable = false;
             }
+            finally
+            {
+                Monitor.Exit(mFrameSyncObject);
+            }
 
-            // Latch the data.
+                // Latch the data.
             mTextureRender.checkGlError("before updateTexImage");
             mSurfaceTexture.UpdateTexImage();
         }
@@ -577,11 +589,12 @@ namespace GrowPea.Droid
         }
 
         // SurfaceTexture callback
-    [MethodImpl(MethodImplOptions.Synchronized)]
+        [MethodImpl(MethodImplOptions.Synchronized)]
         public void OnFrameAvailable(SurfaceTexture st)
         {
             //if (VERBOSE) Log.d(TAG, "new frame available");
-            lock(mFrameSyncObject)
+            Monitor.Enter(mFrameSyncObject);
+            try
             {
                 if (mFrameAvailable)
                 {
@@ -590,6 +603,11 @@ namespace GrowPea.Droid
 
                 mFrameAvailable = true;
                 Monitor.PulseAll(mFrameSyncObject);
+
+            }
+            finally
+            {
+                Monitor.Exit(mFrameSyncObject);
             }
         }
 
