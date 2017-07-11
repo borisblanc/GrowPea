@@ -57,14 +57,12 @@ namespace GrowPea.Droid
 
     private readonly List<byte[]> _ByteBuffers;
 
-    private List<EncodedforMux> _formuxer;
-
     private static MediaCodecCapabilities _SelectedCodecColor;
 
     private static ImageFormatType _CameraColorFormat = ImageFormatType.Nv21; //ImageFormatType NV21 or YV12 should be the image formats all Android cameras save under ?nv21 should always work i think?
 
 
-    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<byte[]> byteBuffers, List<EncodedforMux> formuxer)
+    public EncoderMuxer(int width, int height, int bitRate, int framerate, string oFilePath, List<byte[]> byteBuffers)
     {
         if ((width % 16) != 0 || (height % 16) != 0)
         {
@@ -76,7 +74,6 @@ namespace GrowPea.Droid
         _Filepath = oFilePath;
         _ByteBuffers = byteBuffers;
         _frameRate = framerate;
-        _formuxer = formuxer;
     }
 
     public void EncodeVideoToMp4()
@@ -282,23 +279,27 @@ namespace GrowPea.Droid
                                     //byte[] decomB = Utils.DecompressFast(imagedata);
 
                                     //var yuv = new YuvImage(decomB, _CameraColorFormat, _Width, _Height, null);
-                                    Bitmap b = BitmapFactory.DecodeByteArray(imagedata, 0, imagedata.Length);
-                                    byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
-                                    int[] argb = new int[b.Width * b.Height];
-                                    b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
-                                    encodeYUV420SP(yuv, argb, b.Width, b.Height);
-                                    
+                                    //Bitmap b = BitmapFactory.DecodeByteArray(imagedata, 0, imagedata.Length);
+                                    //byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
+                                    //int[] argb = new int[b.Width * b.Height];
+                                    //b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                    //encodeYUV420SP(yuv, argb, b.Width, b.Height);
 
-                                    //var yuvarray = yuv;
+                                Bitmap b = BitmapFactory.DecodeByteArray(imagedata, 0, imagedata.Length);
+                                byte[] yuv = new byte[b.Width * b.Height * 3 / 2];
+                                int[] argb = new int[b.Width * b.Height];
+                                b.GetPixels(argb, 0, b.Width, 0, 0, b.Width, b.Height);
+                                encodeYUV420SP(yuv, argb, b.Width, b.Height);
+                                var yuvimage = new YuvImage(yuv, _CameraColorFormat, _Width, _Height, null);
+                                var yuvarray = yuvimage.GetYuvData();
+                                colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
 
-                                colorcorrection(ref yuv); //method for fixing common color matching issues see below for comments
+                                inputBuf.Put(yuvarray);
 
-                                inputBuf.Put(yuv);
-
-                                chunkSize = yuv.Length;
+                                chunkSize = yuvarray.Length;
                                 //yuv = null;
                                 //GC.Collect(); //essential to fix memory leak from new YuvImage allocation above
-                                    b.Recycle();
+                                b.Recycle();
                             }
 
 
@@ -376,14 +377,9 @@ namespace GrowPea.Droid
                             throw new RuntimeException("muxer hasnt started");
                         }
 
-                            //  adjust the ByteBuffer values to match BufferInfo (not needed?) old
-                            //encodedData.Position(mBufferInfo.Offset);
-                            //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
-
-                        //var b = new byte[encodedData.Remaining()];
-                        //encodedData.Get(b);
-                        //_formuxer.Add(new EncodedforMux( _TrackIndex, b, mBufferInfo));
-                        //ByteBuffer buf = ByteBuffer.Wrap(b);
+                        //  adjust the ByteBuffer values to match BufferInfo (not needed?) old
+                        //encodedData.Position(mBufferInfo.Offset);
+                        //encodedData.Limit(mBufferInfo.Offset + this.mBufferInfo.Size);
 
                         _Muxer.WriteSampleData(_TrackIndex, encodedData, mBufferInfo);
                         Log.Info(TAG, string.Format("{0} bytes to muxer", mBufferInfo.Size));

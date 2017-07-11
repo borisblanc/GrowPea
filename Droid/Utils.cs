@@ -143,7 +143,7 @@ namespace GrowPea
             }
         }
 
-        public static void AddConvertByteBuffer(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
+        public static void AddConvertByteBuffer(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected, int width, int height, int quality)
         {
             try
             {
@@ -151,20 +151,17 @@ namespace GrowPea
                 var b = new byte[bytebuff.Remaining()];
                 bytebuff.Get(b);
 
-                var yuv = new YuvImage(b, ImageFormatType.Nv21, 1280, 720, null);
+                var yuv = new YuvImage(b, ImageFormatType.Nv21, width, height, null);
                 byte[] jpegArray;
                 using (var baos = new MemoryStream())
                 {
-                    yuv.CompressToJpeg(new Rect(0, 0, 1280, 720), 60, baos); // Where 100 is the quality of the generated jpeg
+                    yuv.CompressToJpeg(new Rect(0, 0, width, height), quality, baos); // Where 100 is the quality of the generated jpeg
                     jpegArray = baos.ToArray();
-                    //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
-                    //b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
                 }
-                //byte[] compb = Utils.CompressFast(b);
 
                 lock (obj)
                 {
-                    if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
+                    //if (!allframes.ContainsKey(timestamp)) //can i spped up this check?
                         allframes.Add(timestamp, new FrameData(timestamp, jpegArray, detected));
                 }
             }

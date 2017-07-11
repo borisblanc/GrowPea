@@ -62,7 +62,7 @@ namespace GrowPea.Droid
 
         private List<Task> CompressDataTasks;
 
-        private List<EncodedforMux> formuxer;
+        private int compressquality;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -89,7 +89,7 @@ namespace GrowPea.Droid
 
                 SetVideoSize(camface);
                 CreateCameraSource(false);
-                formuxer = new List<EncodedforMux>();
+                compressquality = 70; //tested ok for now with lossy jpeg compression
             }
             catch (Exception e)
             {
@@ -240,7 +240,7 @@ namespace GrowPea.Droid
                     _allFrameData = new SortedList<float, FrameData>();
                     CompressDataTasks = new List<Task>();
 
-                    var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks);
+                    var myFaceDetector = new CustomFaceDetector(detector, ref _allFrameData, ref CompressDataTasks, compressquality);
 
                     //myFaceDetector.PropertyChanged += OnPropertyChanged;
 
@@ -302,7 +302,7 @@ namespace GrowPea.Droid
 
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
-                    var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds, ref formuxer);
+                    var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
                     var images = await fdp.BeginProcessingFrames();
                     //List<byte[]> images = _allFrameData.Select(f => f.Value._yuv).ToList();
 

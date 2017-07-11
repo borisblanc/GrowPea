@@ -18,6 +18,8 @@ namespace GrowPea.Droid
 
         private List<Task> _compressDataTasks;
 
+        private int _compressquality;
+
         //private bool _isRecording;
 
         //public bool isRecording
@@ -35,11 +37,12 @@ namespace GrowPea.Droid
 
         //public event PropertyChangedEventHandler PropertyChanged;
 
-        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData, ref List<Task> CompressDataTasks)
+        public CustomFaceDetector(FaceDetector detector, ref SortedList<float, FrameData> allFrameData, ref List<Task> CompressDataTasks, int compressquality)
         {
             _detector = detector;
             _allFrameData = allFrameData;
             _compressDataTasks = CompressDataTasks;
+            _compressquality = compressquality;
         }
 
         public override SparseArray Detect(Frame frame)
@@ -50,18 +53,9 @@ namespace GrowPea.Droid
 
                 var _frametimestamp = frame.GetMetadata().TimestampMillis;
 
-                //var b = new byte[_framebuff.Remaining()];
-                //_framebuff.Get(b); //substitute for deepcopy below
-
                 var detected = _detector.Detect(frame);
 
-                //Utils.deepCopy(frame.GrayscaleImageData); this is what causes oom issues but also what makes it all work??
-
-
-                _compressDataTasks.Add(Task.Run(() => Utils.AddConvertByteBuffer(ref _allFrameData, _framebuff, _frametimestamp, detected)));
-
-                //if (!_allFrameData.ContainsKey(_frametimestamp))
-                //    _allFrameData.Add(_frametimestamp, new FrameData(_frametimestamp, b, detected));
+                _compressDataTasks.Add(Task.Run(() => Utils.AddConvertByteBuffer(ref _allFrameData, _framebuff, _frametimestamp, detected, frame.GetMetadata().Width, frame.GetMetadata().Height, _compressquality)));
 
                 return detected;
             }
