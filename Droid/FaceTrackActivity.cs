@@ -10,6 +10,7 @@ using Android.Graphics;
 using Android.Gms.Common;
 using Android.Content.PM;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,8 +42,8 @@ namespace GrowPea.Droid
 
         private bool isRecording = false;
 
-        private int pFramewidth = 1280; //eventually should be user driven and based on device capabilities
-        private int pFrameHeight = 720; //eventually should be user driven and based on device capabilities
+        private int pFramewidth = 640; //eventually should be user driven and based on device capabilities
+        private int pFrameHeight = 360; //eventually should be user driven and based on device capabilities
 
         private Single _recordFps = 60.0f;
         private int _createfps = 30;
@@ -53,7 +54,9 @@ namespace GrowPea.Droid
 
         private string _currentfilepath;
 
-        public Dictionary<double, Face> _framelist;
+        public Dictionary<int, Tuple<long, Face>> _framelist;
+
+        private List<Task> _FaceFetchDataTasks;
 
         private int compressquality = 100; //tested ok for now with lossy jpeg compression default for now byt need to be user configurable
 
@@ -80,8 +83,21 @@ namespace GrowPea.Droid
                 mPlaybutton.Enabled = _currentfilepath != null;
 
 
-                _framelist = new Dictionary<double, Face>();
-                new ExtractMpegFrames("636354234996333350.mp4", ref _framelist);
+                _framelist = new Dictionary<int, Tuple<long, Face>>();
+                //_FaceFetchDataTasks = new List<Task>();
+                Stopwatch s = new Stopwatch();
+                s.Start();
+                new ExtractMpegFrames("636354234996333350.mp4", ref _framelist, pFramewidth, pFrameHeight);
+
+                //while (_FaceFetchDataTasks.Count > _framelist.Count)
+                //{
+                //    //Task.Factory.ContinueWhenAll(_FaceFetchDataTasks.ToArray(), result => { displayresults(s); });
+                //    Log.Info("still have:", (_FaceFetchDataTasks.Count - _framelist.Count).ToString());
+                //    Thread.Sleep(2000);
+                //}
+
+                displayresults(s);
+                
             }
             catch (Exception e)
             {
@@ -89,6 +105,13 @@ namespace GrowPea.Droid
             }
         }
 
+
+        private void displayresults(Stopwatch s)
+        {
+            s.Stop();
+            Log.Info("innerSTOPWATCH!!!!:", s.ElapsedMilliseconds.ToString());
+            var x = _framelist;
+        }
 
         private void ToggleRecording()
         {

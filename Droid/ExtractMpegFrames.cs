@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Vision;
 using Android.Gms.Vision.Faces;
@@ -70,18 +72,24 @@ namespace GrowPea.Droid
 
         private static String INPUT_FILE;
 
-        private const int MAX_FRAMES = 10; // stop extracting after this many
-
-        public Dictionary<double, Face> _framelist;
+        public Dictionary<int, Tuple<long, Face>> _framelist;
 
         private static readonly Object obj = new Object();
 
+        //private List<Task> _FaceFetchDataTasks;
+
+        protected static int _width;
+        protected static int _height;
+
 
         /** test entry point */
-        public ExtractMpegFrames(string inputfilename, ref Dictionary<double, Face> framelist)
+        public ExtractMpegFrames(string inputfilename, ref Dictionary<int, Tuple<long, Face>> framelist, int width, int height)
         {
             INPUT_FILE = inputfilename;
             _framelist = framelist;
+            //_FaceFetchDataTasks = FaceFetchDataTasks;
+            _width = width;
+            _height = height;
             ExtractMpegFramesWrapper.runTest(this);
         }
 
@@ -110,7 +118,7 @@ namespace GrowPea.Droid
             {
                 try
                 {
-                    mTest.extractMpegFrames(INPUT_FILE);
+                    mTest.extractMpegFrames(INPUT_FILE, _width, _height);
                 }
                 catch (Throwable th)
                 {
@@ -154,13 +162,11 @@ namespace GrowPea.Droid
      * it by adjusting the GL viewport to get letterboxing or pillarboxing, but generally if
      * you're extracting frames you don't want black bars.
      */
-    public void extractMpegFrames(string filename) 
+    public void extractMpegFrames(string filename, int saveWidth, int saveHeight) 
     {
         MediaCodec decoder = null;
         CodecOutputSurface outputSurface = null;
         MediaExtractor extractor = null;
-        int saveWidth = 1280;
-        int saveHeight = 720;
         INPUT_FILE = filename;
 
         try
@@ -240,14 +246,9 @@ namespace GrowPea.Droid
             String mime = format.GetString(MediaFormat.KeyMime);
             if (mime.StartsWith("video/"))
             {
-                //if (VERBOSE)
-                //{
-                //    Log.d(TAG, "Extractor selected track " + i + " (" + mime + "): " + format);
-                //}
                 return i;
             }
         }
-
         return -1;
     }
 
@@ -256,28 +257,34 @@ namespace GrowPea.Droid
  */
     private void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder, CodecOutputSurface outputSurface) 
     {
+        //Stopwatch stopWatch = new Stopwatch();
         const int TIMEOUT_USEC = 10000;
         ByteBuffer []
         decoderInputBuffers = decoder.GetInputBuffers();
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
         int inputChunk = 0;
         int decodeCount = 0;
-        long frameSaveTime = 0;
+        var frameTimestamps = new List<long>();
 
         bool outputDone = false;
         bool inputDone = false;
 
+
+        //speed vs accuracy tradeoffs https://stackoverflow.com/questions/34132444/google-mobile-vision-poor-facedetector-performance-without-camerasource
+        //reducing bitmap resolution helps the most and thats ok because i'm not using them after
         var detector = new Android.Gms.Vision.Faces.FaceDetector.Builder(Application.Context)
-            .SetTrackingEnabled(false)
-            .SetClassificationType(ClassificationType.All)
-            .SetProminentFaceOnly(true)
-            .SetMinFaceSize((float)0.2)
-            .Build();
+        .SetTrackingEnabled(true) //tracking enables false makes it much slow wtf?!?!
+        .SetClassificationType(ClassificationType.All)
+        .SetProminentFaceOnly(true) // no diff
+        .SetMinFaceSize((float)0.2) //small performance gain when removed
+        //.SetMode(FaceDetectionMode.Fast) // tiny small performance gain 
+        .Build();
+
+        
 
         while (!outputDone)
         {
-            //if (VERBOSE) Log.d(TAG, "loop");
-
+            //stopWatch.Start();
             // Feed more data to the decoder.
             if (!inputDone)
             {
@@ -302,8 +309,8 @@ namespace GrowPea.Droid
                                 //Log.w(TAG, "WEIRD: got sample from track " + extractor.getSampleTrackIndex() + ", expected " + trackIndex);
                         }
 
-                        long presentationTimeUs = extractor.SampleTime;
-                        decoder.QueueInputBuffer(inputBufIndex, 0, chunkSize, presentationTimeUs, 0 /*flags*/);
+                        frameTimestamps.Add(extractor.SampleTime); //might need to play with offset here to get right sync from decoder
+                        decoder.QueueInputBuffer(inputBufIndex, 0, chunkSize, extractor.SampleTime, 0 /*flags*/);
                             //if (VERBOSE) {
                             //    Log.d(TAG, "submitted frame " + inputChunk + " to dec, size=" +
                             //            chunkSize);
@@ -351,41 +358,48 @@ namespace GrowPea.Droid
 
                     bool doRender = (info.Size != 0);
 
+                    //could not get this working!!!
                     // As soon as we call releaseOutputBuffer, the buffer will be forwarded
                     // to SurfaceTexture to convert to a texture.  The API doesn't guarantee
                     // that the texture will be available before the call returns, so we
                     // need to wait for the onFrameAvailable callback to fire.
+
                     decoder.ReleaseOutputBuffer(decoderStatus, doRender);
 
                     if (doRender) {
-                        //if (VERBOSE) Log.d(TAG, "awaiting decode of frame " + decodeCount);
                         //outputSurface.awaitNewImage(); //could not get callback to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
+                        
                         outputSurface.mTextureRender.checkGlError("before updateTexImage");
                         outputSurface.mSurfaceTexture.UpdateTexImage();
                         outputSurface.drawImage(true);
+                        //Log.Info("innerSTOPWATCH_begin!!!!:", stopWatch.ElapsedMilliseconds.ToString());
+                        //can't call face detector this way its too slow or maybe there is a busy loop???
+                        //_FaceFetchDataTasks.Add(Task.Run(() => CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount, frameTimestamps[decodeCount])));
+                        CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount, frameTimestamps[decodeCount]);
+                        //Log.Info("innerSTOPWATCH_end!!!!:", stopWatch.ElapsedMilliseconds.ToString());
 
-                        CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount);
                         decodeCount++;
                     }
                 }
             }
         }
-
-        //int numSaved = (MAX_FRAMES < decodeCount) ? MAX_FRAMES : decodeCount;
-            //Log.d(TAG, "Saving " + numSaved + " frames took " + (frameSaveTime / numSaved / 1000) + " us per frame");
+        
+        //stopWatch.Stop();
+        //Log.Info("STOPWATCH!!!!:", stopWatch.ElapsedMilliseconds.ToString());
+        detector.Release();
     }
 
-    private void CreateFaceframes(Android.Gms.Vision.Faces.FaceDetector detector, Bitmap b, int ptime)
+    private void CreateFaceframes(Android.Gms.Vision.Faces.FaceDetector detector, Bitmap b, int index, long timestamp)
     {
         try
         {
             Frame newframe = new Frame.Builder().SetBitmap(b).Build();
-
-            SparseArray faces = detector.Detect(newframe);
+            SparseArray faces = detector.Detect(newframe); //takes longest
 
             lock (obj)
             {
-                _framelist.Add(ptime, Utils.GetSparseFace(faces));
+                if (!_framelist.ContainsKey(index))
+                _framelist.Add(index, new Tuple<long, Face>(timestamp, Utils.GetSparseFace(faces)));
             }
         }
         catch (System.Exception e)
@@ -396,6 +410,7 @@ namespace GrowPea.Droid
         finally
         {
             b.Recycle();
+            Log.Info("CreateFaceframes!!!", string.Format("Frame number {0} Processed!!!!!!!", index));
         }
     }
 
@@ -423,7 +438,7 @@ namespace GrowPea.Droid
         int mWidth;
         int mHeight;
 
-        private Object mFrameSyncObject = new Object();   // guards mFrameAvailable
+        //private Object mFrameSyncObject = new Object();   // guards mFrameAvailable
         private bool mFrameAvailable;
 
         private ByteBuffer mPixelBuf;                       // used by saveFrame()
@@ -473,7 +488,8 @@ namespace GrowPea.Droid
                 //
                 // Java language note: passing "this" out of a constructor is generally unwise,
                 // but we should be able to get away with it here.
-                //removed because could not get monitor to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
+
+                //removed because could not get callback to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
                 //mSurfaceTexture.SetOnFrameAvailableListener(this);
 
                 mSurface = new Surface(mSurfaceTexture);
@@ -728,7 +744,7 @@ namespace GrowPea.Droid
             //}
         }
 
-        public Bitmap GetFramebitmap()
+        public Bitmap GetFramebitmap() //try to speed this up later
         {
             mPixelBuf.Rewind();
             GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
