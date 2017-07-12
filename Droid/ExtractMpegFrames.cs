@@ -66,14 +66,13 @@ namespace GrowPea.Droid
 
         private static String INPUT_FILE;
 
-
-
         private const int MAX_FRAMES = 10; // stop extracting after this many
 
         /** test entry point */
-        public ExtractMpegFrames() 
+        public ExtractMpegFrames(string inputfilename)
         {
-            //ExtractMpegFramesWrapper.runTest(this);
+            INPUT_FILE = inputfilename;
+            ExtractMpegFramesWrapper.runTest(this);
         }
 
         /**
@@ -84,41 +83,58 @@ namespace GrowPea.Droid
          * The wrapper propagates exceptions thrown by the worker thread back to the caller.
          */
 
-//        private static class ExtractMpegFramesWrapper 
-//        {
-//            private Throwable mThrowable;
-//            //private ExtractMpegFramesTest mTest;
+        private class ExtractMpegFramesWrapper: Java.Lang.Object, IRunnable
+        {
+            private Throwable mThrowable;
+            private ExtractMpegFrames mTest;
 
-//        private ExtractMpegFramesWrapper(ExtractMpegFramesTest test)
-//        {
-//            mTest = test;
-//        }
+            public IntPtr Handle => base.Handle;
 
-//            @Override
-//        public void run()
-//        {
-//            try
-//            {
-//                mTest.extractMpegFrames();
-//            }
-//            catch (Throwable th)
-//            {
-//                mThrowable = th;
-//            }
-//        }
+            private ExtractMpegFramesWrapper(ExtractMpegFrames test)
+            {
+                mTest = test;
+            }
 
-///** Entry point. */
-//        public static void runTest(ExtractMpegFramesTest obj) throws Throwable
-//        {
-//            ExtractMpegFramesWrapper wrapper = new ExtractMpegFramesWrapper(obj);
-//        Thread th = new Thread(wrapper, "codec test");
-//        th.start();
-//                    th.join();
-//                    if (wrapper.mThrowable != null) {
-//                        throw wrapper.mThrowable;
-//                    }
-//            }
-//    }
+            //@Override
+            public void Run()
+            {
+                try
+                {
+                    mTest.extractMpegFrames(INPUT_FILE);
+                }
+                catch (Throwable th)
+                {
+                    mThrowable = th;
+                }
+            }
+
+            /** Entry point. */
+            public static void runTest(ExtractMpegFrames obj) 
+            {
+                try
+                {
+
+                    var wrapper = new ExtractMpegFramesWrapper(obj);
+                    Java.Lang.Thread th = new Java.Lang.Thread(wrapper, "codec test");
+                    th.Start();
+                    th.Join();
+                    if (wrapper.mThrowable != null)
+                    {
+                        throw wrapper.mThrowable;
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
+
+            public void Dispose()
+            {
+                base.Dispose();
+            }
+        }
 
     /**
      * Tests extraction from an MP4 to a series of PNG files.
@@ -358,7 +374,7 @@ namespace GrowPea.Droid
      * By default, the Surface will be using a BufferQueue in asynchronous mode, so we
      * can potentially drop frames.
      */
-    private class CodecOutputSurface: SurfaceTexture.IOnFrameAvailableListener
+    private class CodecOutputSurface: Java.Lang.Object, SurfaceTexture.IOnFrameAvailableListener
     {
         private STextureRender mTextureRender;
         private SurfaceTexture mSurfaceTexture;
@@ -374,6 +390,8 @@ namespace GrowPea.Droid
         private bool mFrameAvailable;
 
         private ByteBuffer mPixelBuf;                       // used by saveFrame()
+
+        public CodecOutputSurface() { }
 
         /**
          * Creates a CodecOutputSurface backed by a pbuffer with the specified dimensions.  The
@@ -541,11 +559,11 @@ namespace GrowPea.Droid
             return mSurface;
         }
 
-            /**
-             * Latches the next buffer into the texture.  Must be called from the thread that created
-             * the CodecOutputSurface object.  (More specifically, it must be called on the thread
-             * with the EGLContext that contains the GL texture object used by SurfaceTexture.)
-             */
+        /**
+        * Latches the next buffer into the texture.  Must be called from the thread that created
+        * the CodecOutputSurface object.  (More specifically, it must be called on the thread
+        * with the EGLContext that contains the GL texture object used by SurfaceTexture.)
+        */
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void awaitNewImage()
         {
@@ -554,7 +572,7 @@ namespace GrowPea.Droid
             {
                 while (!mFrameAvailable)
                 {
-                    
+
                     // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
                     // stalling the test if it doesn't arrive.
                     Monitor.Wait(mFrameSyncObject, 2500);
@@ -563,7 +581,7 @@ namespace GrowPea.Droid
                         // TODO: if "spurious wakeup", continue while loop
                         throw new System.Exception("frame wait timed out");
                     }
-                    
+
 
                 }
                 mFrameAvailable = false;
@@ -598,7 +616,7 @@ namespace GrowPea.Droid
             {
                 if (mFrameAvailable)
                 {
-                    throw new RuntimeException("mFrameAvailable already set, frame could be dropped");
+                    throw new System.Exception("mFrameAvailable already set, frame could be dropped");
                 }
 
                 mFrameAvailable = true;
@@ -651,7 +669,7 @@ namespace GrowPea.Droid
             mPixelBuf.Rewind();
             GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
 
-            var createfilepath = new Java.IO.File(FILES_DIR, DateTime.UtcNow.ToString()).AbsolutePath;
+            var createfilepath = new Java.IO.File(FILES_DIR, DateTime.Now.Ticks + ".bmp").AbsolutePath;
             using (FileStream bos = new FileStream(createfilepath, FileMode.CreateNew))
             {
                 try

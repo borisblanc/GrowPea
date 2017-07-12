@@ -89,9 +89,7 @@ namespace GrowPea.Droid
 
                 //SetVideoSize(camface);
                 //CreateCameraSource(false);
-                var test = new ExtractMpegFrames();
-
-                test.extractMpegFrames("636353814605172920.mp4");
+                var test = new ExtractMpegFrames("636353814605172920.mp4");
             }
             catch (Exception e)
             {
