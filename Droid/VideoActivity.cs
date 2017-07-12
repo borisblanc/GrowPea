@@ -302,8 +302,8 @@ namespace GrowPea.Droid
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
                     var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
-                    var images = await fdp.BeginProcessingFrames();
-                    //List<byte[]> images = _allFrameData.Select(f => f.Value._yuv).ToList();
+                    //var images = await fdp.BeginProcessingFrames(); //do best frames video
+                    List<byte[]> images = _allFrameData.Select(f => f.Value._yuv).ToList(); //do all video
 
 
                     if (images == null)

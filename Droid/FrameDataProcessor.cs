@@ -93,7 +93,7 @@ namespace GrowPea.Droid
                     {
                         for (var i = 0; i < _allFrameData.Count - coreframeslength; i++)
                         {
-                            var range = _allFrameData.GetRange(i, coreframeslength).Select(f => GetImageUsability(GetSparseFace(f._sparsearray))).ToList();
+                            var range = _allFrameData.GetRange(i, coreframeslength).Select(f => GetImageUsability(Utils.GetSparseFace(f._sparsearray))).ToList();
 
                             var avg = range.Average();
 
@@ -131,27 +131,7 @@ namespace GrowPea.Droid
             return _fps * _vidlengthseconds; //total frames will always be frames per second * number of seconds
         }
 
-        private Face GetSparseFace(SparseArray array)
-        {
-            Face face = null;
-            try
-            {
-                for (int i = 0, nsize = array.Size(); i < nsize; i++)
-                {
-                    Object obj = array.ValueAt(i);
-                    if (obj != null && obj.GetType() == typeof(Face))
-                    {
-                        face = (Face) obj;
-                        break;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error(TAG, "GetSparseFace borked somehow", e);
-            }
-            return face;
-        }
+
 
 
         public string MakeBufferVideo(List<byte[]> imagesinfo, String filename)

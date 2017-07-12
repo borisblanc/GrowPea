@@ -15,9 +15,13 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Android.App;
+using Android.Gms.Vision;
+using Android.Gms.Vision.Faces;
 using Android.Media;
 
 using Android.Graphics;
@@ -68,10 +72,16 @@ namespace GrowPea.Droid
 
         private const int MAX_FRAMES = 10; // stop extracting after this many
 
+        public Dictionary<double, Face> _framelist;
+
+        private static readonly Object obj = new Object();
+
+
         /** test entry point */
-        public ExtractMpegFrames(string inputfilename)
+        public ExtractMpegFrames(string inputfilename, ref Dictionary<double, Face> framelist)
         {
             INPUT_FILE = inputfilename;
+            _framelist = framelist;
             ExtractMpegFramesWrapper.runTest(this);
         }
 
@@ -244,7 +254,7 @@ namespace GrowPea.Droid
 /**
  * Work loop.
  */
-    static void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder, CodecOutputSurface outputSurface) 
+    private void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder, CodecOutputSurface outputSurface) 
     {
         const int TIMEOUT_USEC = 10000;
         ByteBuffer []
@@ -256,6 +266,13 @@ namespace GrowPea.Droid
 
         bool outputDone = false;
         bool inputDone = false;
+
+        var detector = new Android.Gms.Vision.Faces.FaceDetector.Builder(Application.Context)
+            .SetTrackingEnabled(false)
+            .SetClassificationType(ClassificationType.All)
+            .SetProminentFaceOnly(true)
+            .SetMinFaceSize((float)0.2)
+            .Build();
 
         while (!outputDone)
         {
@@ -303,19 +320,19 @@ namespace GrowPea.Droid
             if (!outputDone)
             {
                 int decoderStatus = decoder.DequeueOutputBuffer(info, TIMEOUT_USEC);
-                if (decoderStatus == (int)MediaCodec.InfoTryAgainLater)
+                if (decoderStatus == (int)MediaCodecInfoState.TryAgainLater)
                 {
                     // no output available yet
                     //if (VERBOSE) Log.d(TAG, "no output from decoder available");
                 }
-                else if (decoderStatus == (int)MediaCodec.InfoOutputBuffersChanged)
+                else if (decoderStatus == (int)MediaCodecInfoState.OutputBuffersChanged)
                 {
                     // not important for us, since we're using Surface
                     //if (VERBOSE) Log.d(TAG, "decoder output buffers changed");
                 }
-                else if (decoderStatus == (int)MediaCodec.InfoOutputFormatChanged)
+                else if (decoderStatus == (int)MediaCodecInfoState.OutputFormatChanged)
                 {
-                    MediaFormat newFormat = decoder.OutputFormat;
+                    //MediaFormat newFormat = decoder.OutputFormat;
                     //if (VERBOSE) Log.d(TAG, "decoder output format changed: " + newFormat);
                 }
                 else if (decoderStatus< 0)
@@ -324,9 +341,9 @@ namespace GrowPea.Droid
                     throw new InvalidOperationException();
                 }
                 else
-                { // decoderStatus >= 0
+                { 
                     //if (VERBOSE) Log.d(TAG, "surface decoder given buffer " + decoderStatus + " (size=" + info.size + ")");
-                    if ((info.Flags & MediaCodec.BufferFlagEndOfStream) != 0)
+                    if ((info.Flags & MediaCodecBufferFlags.EndOfStream) != 0)
                     {
                         //if (VERBOSE) Log.d(TAG, "output EOS");
                         outputDone = true;
@@ -342,16 +359,12 @@ namespace GrowPea.Droid
 
                     if (doRender) {
                         //if (VERBOSE) Log.d(TAG, "awaiting decode of frame " + decodeCount);
-                        outputSurface.awaitNewImage();
+                        //outputSurface.awaitNewImage(); //could not get callback to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
+                        outputSurface.mTextureRender.checkGlError("before updateTexImage");
+                        outputSurface.mSurfaceTexture.UpdateTexImage();
                         outputSurface.drawImage(true);
 
-                        if (decodeCount < MAX_FRAMES)
-                        {
-                            File outputFile = new File(FILES_DIR, String.Format("frame-{0}02d.png", decodeCount));
-                            long startWhen = DateTime.Now.Ticks;
-                            outputSurface.saveFrame(outputFile.ToString());
-                            frameSaveTime += DateTime.Now.Ticks - startWhen;
-                        }
+                        CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount);
                         decodeCount++;
                     }
                 }
@@ -360,6 +373,30 @@ namespace GrowPea.Droid
 
         //int numSaved = (MAX_FRAMES < decodeCount) ? MAX_FRAMES : decodeCount;
             //Log.d(TAG, "Saving " + numSaved + " frames took " + (frameSaveTime / numSaved / 1000) + " us per frame");
+    }
+
+    private void CreateFaceframes(Android.Gms.Vision.Faces.FaceDetector detector, Bitmap b, int ptime)
+    {
+        try
+        {
+            Frame newframe = new Frame.Builder().SetBitmap(b).Build();
+
+            SparseArray faces = detector.Detect(newframe);
+
+            lock (obj)
+            {
+                _framelist.Add(ptime, Utils.GetSparseFace(faces));
+            }
+        }
+        catch (System.Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            b.Recycle();
+        }
     }
 
 
@@ -374,10 +411,10 @@ namespace GrowPea.Droid
      * By default, the Surface will be using a BufferQueue in asynchronous mode, so we
      * can potentially drop frames.
      */
-    private class CodecOutputSurface: Java.Lang.Object, SurfaceTexture.IOnFrameAvailableListener
+    private class CodecOutputSurface: Java.Lang.Object //,SurfaceTexture.IOnFrameAvailableListener //could not get callback to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
     {
-        private STextureRender mTextureRender;
-        private SurfaceTexture mSurfaceTexture;
+        public STextureRender mTextureRender;
+        public SurfaceTexture mSurfaceTexture;
         private Surface mSurface;
 
         private EGLDisplay mEGLDisplay = EGL14.EglNoDisplay;
@@ -436,7 +473,8 @@ namespace GrowPea.Droid
                 //
                 // Java language note: passing "this" out of a constructor is generally unwise,
                 // but we should be able to get away with it here.
-                mSurfaceTexture.SetOnFrameAvailableListener(this);
+                //removed because could not get monitor to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
+                //mSurfaceTexture.SetOnFrameAvailableListener(this);
 
                 mSurface = new Surface(mSurfaceTexture);
 
@@ -564,37 +602,37 @@ namespace GrowPea.Droid
         * the CodecOutputSurface object.  (More specifically, it must be called on the thread
         * with the EGLContext that contains the GL texture object used by SurfaceTexture.)
         */
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void awaitNewImage()
-        {
-            Monitor.Enter(mFrameSyncObject);
-            try
-            {
-                while (!mFrameAvailable)
-                {
+        //[MethodImpl(MethodImplOptions.Synchronized)]
+        //public void awaitNewImage() //could not get callback to work and even so do not want to wait 2.5 seconds for each frame, might need to revist
+        //{
+        //    Monitor.Enter(mFrameSyncObject);
+        //    try
+        //    {
+        //        while (!mFrameAvailable)
+        //        {
 
-                    // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
-                    // stalling the test if it doesn't arrive.
-                    Monitor.Wait(mFrameSyncObject, 2500);
-                    if (!mFrameAvailable)
-                    {
-                        // TODO: if "spurious wakeup", continue while loop
-                        throw new System.Exception("frame wait timed out");
-                    }
+        //            // Wait for onFrameAvailable() to signal us.  Use a timeout to avoid
+        //            // stalling the test if it doesn't arrive.
+        //            Monitor.Wait(mFrameSyncObject, 2500);
+        //            if (!mFrameAvailable)
+        //            {
+        //                // TODO: if "spurious wakeup", continue while loop
+        //                throw new System.Exception("frame wait timed out");
+        //            }
 
 
-                }
-                mFrameAvailable = false;
-            }
-            finally
-            {
-                Monitor.Exit(mFrameSyncObject);
-            }
+        //        }
+        //        mFrameAvailable = false;
+        //    }
+        //    finally
+        //    {
+        //        Monitor.Exit(mFrameSyncObject);
+        //    }
 
-                // Latch the data.
-            mTextureRender.checkGlError("before updateTexImage");
-            mSurfaceTexture.UpdateTexImage();
-        }
+        //        //Latch the data.
+        //   mTextureRender.checkGlError("before updateTexImage");
+        //    mSurfaceTexture.UpdateTexImage();
+        //}
 
         /**
          * Draws the data from SurfaceTexture onto the current EGL surface.
@@ -606,28 +644,28 @@ namespace GrowPea.Droid
             mTextureRender.drawFrame(mSurfaceTexture, invert);
         }
 
-        // SurfaceTexture callback
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void OnFrameAvailable(SurfaceTexture st)
-        {
-            //if (VERBOSE) Log.d(TAG, "new frame available");
-            Monitor.Enter(mFrameSyncObject);
-            try
-            {
-                if (mFrameAvailable)
-                {
-                    throw new System.Exception("mFrameAvailable already set, frame could be dropped");
-                }
+        //// SurfaceTexture callback
+        //[MethodImpl(MethodImplOptions.Synchronized)]
+        //public void OnFrameAvailable(SurfaceTexture st)
+        //{
+        //    //if (VERBOSE) Log.d(TAG, "new frame available");
+        //    Monitor.Enter(mFrameSyncObject);
+        //    try
+        //    {
+        //        if (mFrameAvailable)
+        //        {
+        //            throw new System.Exception("mFrameAvailable already set, frame could be dropped");
+        //        }
 
-                mFrameAvailable = true;
-                Monitor.PulseAll(mFrameSyncObject);
+        //        mFrameAvailable = true;
+        //        Monitor.PulseAll(mFrameSyncObject);
 
-            }
-            finally
-            {
-                Monitor.Exit(mFrameSyncObject);
-            }
-        }
+        //    }
+        //    finally
+        //    {
+        //        Monitor.Exit(mFrameSyncObject);
+        //    }
+        //}
 
         /**
          * Saves the current frame to disk as a PNG image.
@@ -669,7 +707,7 @@ namespace GrowPea.Droid
             mPixelBuf.Rewind();
             GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
 
-            var createfilepath = new Java.IO.File(FILES_DIR, DateTime.Now.Ticks + ".bmp").AbsolutePath;
+            var createfilepath = new Java.IO.File(FILES_DIR, filename + ".bmp").AbsolutePath;
             using (FileStream bos = new FileStream(createfilepath, FileMode.CreateNew))
             {
                 try
@@ -688,6 +726,19 @@ namespace GrowPea.Droid
             //if (VERBOSE) {
             //    Log.d(TAG, "Saved " + mWidth + "x" + mHeight + " frame as '" + filename + "'");
             //}
+        }
+
+        public Bitmap GetFramebitmap()
+        {
+            mPixelBuf.Rewind();
+            GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
+            Bitmap bmp = Bitmap.CreateBitmap(mWidth, mHeight, Bitmap.Config.Argb8888);
+            mPixelBuf.Rewind();
+            bmp.CopyPixelsFromBuffer(mPixelBuf);
+            //bmp.Compress(Bitmap.CompressFormat.Png, 90, bos);
+
+            return bmp;
+            //bmp.Recycle();
         }
 
         /**
@@ -938,7 +989,7 @@ namespace GrowPea.Droid
             int error;
             while ((error = GLES20.GlGetError()) != GLES20.GlNoError)
             {
-                //Log.e(TAG, op + ": glError " + error);
+                Log.Error(TAG, "glError: " + error);
                 throw new RuntimeException(op + ": glError " + error);
             }
         }

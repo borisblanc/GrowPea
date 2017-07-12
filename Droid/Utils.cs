@@ -7,6 +7,7 @@ using Java.Lang;
 using Java.Nio;
 using Exception = System.Exception;
 using System.IO.Compression;
+using Android.Gms.Vision.Faces;
 using GrowPea.Droid;
 using Object = System.Object;
 
@@ -16,72 +17,8 @@ namespace GrowPea
     {
         private static readonly System.Object obj = new Object();
 
-        public static ByteBuffer deepCopy(ByteBuffer orig)
-        {
-            int pos = orig.Position(), lim = orig.Limit();
-            try
-            {
-                orig.Position(0).Limit(orig.Capacity()); // set range to entire buffer
-                ByteBuffer toReturn = deepCopyVisible(orig); // deep copy range
-                toReturn.Position(pos).Limit(lim); // set range to original
-                return toReturn;
-            }
-            finally // do in finally in case something goes wrong we don't bork the orig
-            {
-                orig.Position(pos).Limit(lim); // restore original
-            }
-        }
 
-        public static ByteBuffer deepCopyVisible(ByteBuffer orig)
-        {
-            int pos = orig.Position();
-            try
-            {
-                ByteBuffer toReturn;
-                // try to maintain implementation to keep performance
-                if (orig.IsDirect)
-                    toReturn = ByteBuffer.AllocateDirect(orig.Remaining());
-                else
-                    toReturn = ByteBuffer.Allocate(orig.Remaining());
 
-                toReturn.Put(orig);
-                toReturn.Order(orig.Order());
-
-                return (ByteBuffer)toReturn.Position(0);
-            }
-            finally
-            {
-                orig.Position(pos);
-            }
-        }
-
-        private static Bitmap Resize(Bitmap image, int maxWidth, int maxHeight)
-        {
-            if (maxHeight > 0 && maxWidth > 0)
-            {
-                int width = image.Width;
-                int height = image.Height;
-                float ratioBitmap = (float)width / (float)height;
-                float ratioMax = (float)maxWidth / (float)maxHeight;
-
-                int finalWidth = maxWidth;
-                int finalHeight = maxHeight;
-                if (ratioMax > 1)
-                {
-                    finalWidth = (int)((float)maxHeight * ratioBitmap);
-                }
-                else
-                {
-                    finalHeight = (int)((float)maxWidth / ratioBitmap);
-                }
-                image = Bitmap.CreateScaledBitmap(image, finalWidth, finalHeight, true);
-                return image;
-            }
-            else
-            {
-                return image;
-            }
-        }
 
         private static void ExportBitmapAsPNG(Bitmap bitmap, float score)
         {
@@ -116,32 +53,7 @@ namespace GrowPea
             return b;
         }
 
-        public static byte[] Compress(byte[] data)
-        {
-            using (var output = new MemoryStream())
-            {
-                using (var dstream = new DeflateStream(output, CompressionLevel.Optimal))
-                {
-                    dstream.Write(data, 0, data.Length);
-                }
-                return output.ToArray();
-            }
-        }
 
-        public static byte[] Decompress(byte[] data)
-        {
-            using (var input = new MemoryStream(data))
-            {
-                using (var output = new MemoryStream())
-                {
-                    using (var dstream = new DeflateStream(input, CompressionMode.Decompress))
-                    {
-                        dstream.CopyTo(output);
-                    }
-                    return output.ToArray();
-                }
-            }
-        }
 
         public static void AddConvertByteBuffer(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected, int width, int height, int quality)
         {
@@ -171,45 +83,26 @@ namespace GrowPea
             }
         }
 
-        //public static void AddCompressedData(ref SortedList<float, FrameData> allframes, ByteBuffer bytebuff, long timestamp, SparseArray detected)
-        //{
-        //    lock (obj)
-        //    {
-        //        var b = new byte[bytebuff.Remaining()];
-        //        bytebuff.Get(b);
-
-        //        byte[] compb = Utils.CompressFast(b);
-
-        //        if (!allframes.ContainsKey(timestamp))
-        //            allframes.Add(timestamp, new FrameData(timestamp, compb, detected));
-        //    }
-        //}
-
-        public static byte[] CompressFast(byte[] raw)
+        public static Face GetSparseFace(SparseArray array)
         {
-            using (MemoryStream memory = new MemoryStream())
+            Face face = null;
+            try
             {
-                using (GZipStream gzip = new GZipStream(memory, CompressionLevel.Fastest))
+                for (int i = 0, nsize = array.Size(); i < nsize; i++)
                 {
-                    gzip.Write(raw, 0, raw.Length);
-                }
-                return memory.ToArray();
-            }
-        }
-
-        public static byte[] DecompressFast(byte[] data)
-        {
-            using (var input = new MemoryStream(data))
-            {
-                using (var output = new MemoryStream())
-                {
-                    using (var gzip = new GZipStream(input, CompressionMode.Decompress))
+                    Object obj = array.ValueAt(i);
+                    if (obj != null && obj.GetType() == typeof(Face))
                     {
-                        gzip.CopyTo(output);
+                        face = (Face)obj;
+                        break;
                     }
-                    return output.ToArray();
                 }
             }
+            catch (Exception e)
+            {
+                Log.Error("utils", "GetSparseFace borked somehow", e);
+            }
+            return face;
         }
 
 

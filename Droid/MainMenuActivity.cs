@@ -34,6 +34,7 @@ namespace GrowPea.Droid
                 btn_VideoActivity.Click += (object sender, EventArgs e) =>
                 {
                     var intent = new Intent(this, typeof(FaceTrackActivity));
+                    //var intent = new Intent(this, typeof(VideoActivity));
                     StartActivity(intent);
                 };
             }
