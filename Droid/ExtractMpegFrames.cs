@@ -41,6 +41,7 @@ using File = Java.IO.File;
 using FileNotFoundException = Java.IO.FileNotFoundException;
 using Object = System.Object;
 using String = System.String;
+using FaceDetector = Android.Gms.Vision.Faces.FaceDetector;
 
 
 
@@ -72,7 +73,7 @@ namespace GrowPea.Droid
 
         private static String INPUT_FILE;
 
-        public Dictionary<int, Tuple<long, Face>> _framelist;
+        public SortedList<long, SparseArray> _framelist;
 
         private static readonly Object obj = new Object();
 
@@ -83,7 +84,7 @@ namespace GrowPea.Droid
 
 
         /** test entry point */
-        public ExtractMpegFrames(string inputfilename, ref Dictionary<int, Tuple<long, Face>> framelist, int width, int height)
+        public ExtractMpegFrames(string inputfilename, ref SortedList<long, SparseArray> framelist, int width, int height)
         {
             INPUT_FILE = inputfilename;
             _framelist = framelist;
@@ -272,7 +273,7 @@ namespace GrowPea.Droid
 
         //speed vs accuracy tradeoffs https://stackoverflow.com/questions/34132444/google-mobile-vision-poor-facedetector-performance-without-camerasource
         //reducing bitmap resolution helps the most and thats ok because i'm not using them after
-        var detector = new Android.Gms.Vision.Faces.FaceDetector.Builder(Application.Context)
+        var detector = new FaceDetector.Builder(Application.Context)
         .SetTrackingEnabled(true) //tracking enables false makes it much slow wtf?!?!
         .SetClassificationType(ClassificationType.All)
         .SetProminentFaceOnly(true) // no diff
@@ -389,7 +390,7 @@ namespace GrowPea.Droid
         detector.Release();
     }
 
-    private void CreateFaceframes(Android.Gms.Vision.Faces.FaceDetector detector, Bitmap b, int index, long timestamp)
+    private void CreateFaceframes(FaceDetector detector, Bitmap b, int index, long timestamp)
     {
         try
         {
@@ -398,8 +399,8 @@ namespace GrowPea.Droid
 
             lock (obj)
             {
-                if (!_framelist.ContainsKey(index))
-                _framelist.Add(index, new Tuple<long, Face>(timestamp, Utils.GetSparseFace(faces)));
+                //if (!_framelist.ContainsKey(index))
+                _framelist.Add(timestamp, faces);
             }
         }
         catch (System.Exception e)

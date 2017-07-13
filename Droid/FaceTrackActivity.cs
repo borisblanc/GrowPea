@@ -47,18 +47,16 @@ namespace GrowPea.Droid
 
         private Single _recordFps = 60.0f;
         private int _createfps = 30;
-        private int vidlengthseconds = 10;
+        private int vidlengthseconds = 3;
+        private int minframescount = 200;
 
 
         private CameraFacing camface = CameraFacing.Front; //default may change
 
         private string _currentfilepath;
 
-        public Dictionary<int, Tuple<long, Face>> _framelist;
+        public SortedList<long, SparseArray> _framelist;
 
-        private List<Task> _FaceFetchDataTasks;
-
-        private int compressquality = 100; //tested ok for now with lossy jpeg compression default for now byt need to be user configurable
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -83,21 +81,20 @@ namespace GrowPea.Droid
                 mPlaybutton.Enabled = _currentfilepath != null;
 
 
-                _framelist = new Dictionary<int, Tuple<long, Face>>();
-                //_FaceFetchDataTasks = new List<Task>();
+                _framelist = new SortedList<long, SparseArray>();
                 Stopwatch s = new Stopwatch();
                 s.Start();
                 new ExtractMpegFrames("636354234996333350.mp4", ref _framelist, pFramewidth, pFrameHeight);
 
-                //while (_FaceFetchDataTasks.Count > _framelist.Count)
-                //{
-                //    //Task.Factory.ContinueWhenAll(_FaceFetchDataTasks.ToArray(), result => { displayresults(s); });
-                //    Log.Info("still have:", (_FaceFetchDataTasks.Count - _framelist.Count).ToString());
-                //    Thread.Sleep(2000);
-                //}
-
-                displayresults(s);
-                
+                if (_framelist.Count > minframescount)
+                {
+                    StartFrameProcessing();
+                }
+                else
+                {
+                    Showpopup("Not enough frames recorded try again!", ToastLength.Short);
+                }
+                Performanceresults(s);            
             }
             catch (Exception e)
             {
@@ -106,11 +103,51 @@ namespace GrowPea.Droid
         }
 
 
-        private void displayresults(Stopwatch s)
+        private void Performanceresults(Stopwatch s)
         {
             s.Stop();
             Log.Info("innerSTOPWATCH!!!!:", s.ElapsedMilliseconds.ToString());
-            var x = _framelist;
+        }
+
+        private async void StartFrameProcessing()
+        {
+            try
+            {
+                Showpopup("Processing Smiles :)!", ToastLength.Short);
+
+                var fdp = new FrameDataProcessor(ref _framelist, _createfps, vidlengthseconds);
+                var besttimestamprange = await fdp.BeginFramesProcess(); //get best frames collection: todo change to best frames indexes instead
+
+                if (besttimestamprange == null)
+                {
+                    Showpopup("Error with Smiles processing :(!", ToastLength.Short);
+                }
+                else
+                {
+                    Showpopup("Smiles processed :)!", ToastLength.Short);
+                    //var fileresult = await fdp.BeginMakeBufferVideo(images);
+
+                    //if (File.Exists(fileresult))
+                    //{
+                    //    Showpopup("Video Created, Press Play!!!", ToastLength.Short);
+                    //    _currentfilepath = fileresult;
+                    //    TogglePlay(true);
+                    //}
+                    //else
+                    //{
+                    //    Showpopup("Error with video(!", ToastLength.Short);
+                    //    _currentfilepath = null;
+                    //    TogglePlay(false);
+                    //}
+                }
+ 
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+
         }
 
         private void ToggleRecording()
