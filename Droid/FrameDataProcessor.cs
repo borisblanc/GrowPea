@@ -191,7 +191,7 @@ namespace GrowPea.Droid
                 frameoffset = 0;
 
 
-            return _allFrameData.GetRange(bestframegroupindex - frameoffset, GetFrameTotal() - frameoffset).Select(f => f._yuv).ToList();
+            return _allFrameData.GetRange(bestframegroupindex - frameoffset, GetFrameTotal()).Select(f => f._yuv).ToList();
         }
 
 

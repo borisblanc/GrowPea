@@ -57,6 +57,10 @@ namespace GrowPea.Droid
 
         public SortedList<long, SparseArray> _framelist;
 
+        private static readonly Java.IO.File _filesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads);
+
+        private static string _inputfilename = "636354234996333350.mp4";
+
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -84,7 +88,7 @@ namespace GrowPea.Droid
                 _framelist = new SortedList<long, SparseArray>();
                 Stopwatch s = new Stopwatch();
                 s.Start();
-                new ExtractMpegFrames("636354234996333350.mp4", ref _framelist, pFramewidth, pFrameHeight);
+                new ExtractMpegFrames(_filesdir, _inputfilename, ref _framelist, pFramewidth, pFrameHeight);
 
                 if (_framelist.Count > minframescount)
                 {
@@ -125,20 +129,25 @@ namespace GrowPea.Droid
                 else
                 {
                     Showpopup("Smiles processed :)!", ToastLength.Short);
-                    //var fileresult = await fdp.BeginMakeBufferVideo(images);
 
-                    //if (File.Exists(fileresult))
-                    //{
-                    //    Showpopup("Video Created, Press Play!!!", ToastLength.Short);
-                    //    _currentfilepath = fileresult;
-                    //    TogglePlay(true);
-                    //}
-                    //else
-                    //{
-                    //    Showpopup("Error with video(!", ToastLength.Short);
-                    //    _currentfilepath = null;
-                    //    TogglePlay(false);
-                    //}
+                    Java.IO.File inputFile = new Java.IO.File(_filesdir, _inputfilename);
+                    var outputfilename = string.Format("{0}.mp4", DateTime.Now.Ticks);
+                    Java.IO.File outputFile = new Java.IO.File(_filesdir, outputfilename);
+
+                    var result = VideoUtils.startTrim(inputFile, outputFile, besttimestamprange.Item1, besttimestamprange.Item1);
+
+                    if (File.Exists(outputFile.AbsolutePath))
+                    {
+                        Showpopup("Video Created, Press Play!!!", ToastLength.Short);
+                        _currentfilepath = outputFile.AbsolutePath;
+                        TogglePlay(true);
+                    }
+                    else
+                    {
+                        Showpopup("Error with video(!", ToastLength.Short);
+                        _currentfilepath = null;
+                        TogglePlay(false);
+                    }
                 }
  
             }

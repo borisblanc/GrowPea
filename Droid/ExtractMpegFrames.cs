@@ -69,7 +69,6 @@ namespace GrowPea.Droid
         private const bool VERBOSE = false;   // lots of logging
 
         // where to find files (note: requires WRITE_EXTERNAL_STORAGE permission)
-        private static File FILES_DIR = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads);
 
         private static String INPUT_FILE;
 
@@ -82,15 +81,18 @@ namespace GrowPea.Droid
         protected static int _width;
         protected static int _height;
 
+        private static Java.IO.File _filesdir;
+
 
         /** test entry point */
-        public ExtractMpegFrames(string inputfilename, ref SortedList<long, SparseArray> framelist, int width, int height)
+        public ExtractMpegFrames(Java.IO.File filesdir, string inputfilename, ref SortedList<long, SparseArray> framelist, int width, int height)
         {
             INPUT_FILE = inputfilename;
             _framelist = framelist;
             //_FaceFetchDataTasks = FaceFetchDataTasks;
             _width = width;
             _height = height;
+            _filesdir = filesdir;
             ExtractMpegFramesWrapper.runTest(this);
         }
 
@@ -172,7 +174,7 @@ namespace GrowPea.Droid
 
         try
         {
-            File inputFile = new File(FILES_DIR, INPUT_FILE);   // must be an absolute path
+            File inputFile = new File(_filesdir, INPUT_FILE);   // must be an absolute path
                                                                 // The MediaExtractor error messages aren't very useful.  Check to see if the input
                                                                 // file exists so we can throw a better one if it's not there.
             if (!inputFile.CanRead())
@@ -724,7 +726,7 @@ namespace GrowPea.Droid
             mPixelBuf.Rewind();
             GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
 
-            var createfilepath = new Java.IO.File(FILES_DIR, filename + ".bmp").AbsolutePath;
+            var createfilepath = new Java.IO.File(_filesdir, filename + ".bmp").AbsolutePath;
             using (FileStream bos = new FileStream(createfilepath, FileMode.CreateNew))
             {
                 try
