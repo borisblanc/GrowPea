@@ -37,7 +37,7 @@ using Android.Util;
 using Java.IO;
 using Java.Lang;
 using Java.Nio;
-
+using Java.Security;
 using Java.Util;
 using String = System.String;
 
@@ -75,7 +75,11 @@ namespace GrowPea
 
         private static bool genVideoUsingMuxer(String srcPath, String dstPath, long startMicroSeconds, long endMicroSeconds, bool useAudio, bool useVideo)
         {
-        // Set up MediaExtractor to read from the source.
+            if (startMicroSeconds == endMicroSeconds)
+            {
+                throw new InvalidParameterException("You shit!! end has to be greater than start!!");
+            }
+            // Set up MediaExtractor to read from the source.
             MediaExtractor extractor = new MediaExtractor();
             extractor.SetDataSource(srcPath);
             int trackCount = extractor.TrackCount;

@@ -57,9 +57,11 @@ namespace GrowPea.Droid
 
         public SortedList<long, SparseArray> _framelist;
 
-        private static readonly Java.IO.File _filesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads);
+        private static readonly Java.IO.File _downloadsfilesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads);
 
-        private static string _inputfilename = "636354234996333350.mp4";
+        private static readonly Java.IO.File _camerafilesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim);
+
+        private static string _inputfilename = "VID_20170713_174052.mp4";//"636354234996333350.mp4";//"VID_20170713_174052.mp4";
 
 
         protected override void OnCreate(Bundle bundle)
@@ -88,17 +90,18 @@ namespace GrowPea.Droid
                 _framelist = new SortedList<long, SparseArray>();
                 Stopwatch s = new Stopwatch();
                 s.Start();
-                new ExtractMpegFrames(_filesdir, _inputfilename, ref _framelist, pFramewidth, pFrameHeight);
+
+                new ExtractMpegFrames(_downloadsfilesdir, _inputfilename, ref _framelist, pFramewidth, pFrameHeight);
 
                 if (_framelist.Count > minframescount)
                 {
-                    StartFrameProcessing();
+                    StartFrameProcessing(s);
                 }
                 else
                 {
                     Showpopup("Not enough frames recorded try again!", ToastLength.Short);
                 }
-                Performanceresults(s);            
+                          
             }
             catch (Exception e)
             {
@@ -113,7 +116,7 @@ namespace GrowPea.Droid
             Log.Info("innerSTOPWATCH!!!!:", s.ElapsedMilliseconds.ToString());
         }
 
-        private async void StartFrameProcessing()
+        private async void StartFrameProcessing(Stopwatch s)
         {
             try
             {
@@ -130,11 +133,11 @@ namespace GrowPea.Droid
                 {
                     Showpopup("Smiles processed :)!", ToastLength.Short);
 
-                    Java.IO.File inputFile = new Java.IO.File(_filesdir, _inputfilename);
+                    Java.IO.File inputFile = new Java.IO.File(_downloadsfilesdir, _inputfilename);
                     var outputfilename = string.Format("{0}.mp4", DateTime.Now.Ticks);
-                    Java.IO.File outputFile = new Java.IO.File(_filesdir, outputfilename);
+                    Java.IO.File outputFile = new Java.IO.File(_downloadsfilesdir, outputfilename);
 
-                    var result = VideoUtils.startTrim(inputFile, outputFile, besttimestamprange.Item1, besttimestamprange.Item1);
+                    var result = VideoUtils.startTrim(inputFile, outputFile, besttimestamprange.Item1, besttimestamprange.Item2);
 
                     if (File.Exists(outputFile.AbsolutePath))
                     {
@@ -148,13 +151,14 @@ namespace GrowPea.Droid
                         _currentfilepath = null;
                         TogglePlay(false);
                     }
+                    Performanceresults(s);
                 }
  
             }
             catch (Exception e)
             {
+                var x = e;
 
-                throw;
             }
 
         }

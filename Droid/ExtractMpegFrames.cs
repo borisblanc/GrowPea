@@ -81,11 +81,11 @@ namespace GrowPea.Droid
         protected static int _width;
         protected static int _height;
 
-        private static Java.IO.File _filesdir;
+        private static File _filesdir;
 
 
         /** test entry point */
-        public ExtractMpegFrames(Java.IO.File filesdir, string inputfilename, ref SortedList<long, SparseArray> framelist, int width, int height)
+        public ExtractMpegFrames(File filesdir, string inputfilename, ref SortedList<long, SparseArray> framelist, int width, int height)
         {
             INPUT_FILE = inputfilename;
             _framelist = framelist;
