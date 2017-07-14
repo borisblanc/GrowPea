@@ -30,7 +30,7 @@ namespace GrowPea.Droid
 
         private int _bitRate;
 
-        private int _fps;
+        private int _fps; //todo need to get this from video not user setting
 
         private int _vidlengthseconds;
 
@@ -102,45 +102,71 @@ namespace GrowPea.Droid
         private Tuple<long, long> ProcessAllFrames()
         {
             var coreframesavg = new SortedList<long, double>();
-            var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video 
+            var coreframeslength = _fps * 2; //core sample of frames will be two seconds of video might in future vary depending on user settings
+            var frameoffset = coreframeslength / 2; //offset to put coreframes in middle of total frames for entire video.
+
+            var computelimit = _framelist.Count - (GetFrameTotal() - frameoffset); //no sense to compute walking average past this point because can't use it
+            var searchlimit = _framelist.Count - (coreframeslength - frameoffset); //this will keep walking average calcs only happening within range
 
             try
             {
                 if (_framelist != null)
                 {
-                    for (var i = 0; i < _framelist.Count - coreframeslength; i++)
+                    for (var i = 0; i < searchlimit; i++)
                     {
                         var currenttimestamp = _framelist.Keys[i];
-                        var range = _framelist.ToList().GetRange(i, coreframeslength);
-                        var listofscores = new SortedList<long, double>();
-                        foreach (var kvp in range)
+
+                        if (i < computelimit) //makes sense to compute because we will can use it
                         {
-                            listofscores.Add(kvp.Key, kvp.Value.Size() != 0 ? GetImageUsability(Utils.GetSparseFace(kvp.Value)) : -1); //return -1 for usabilty if no face exists
+                            List<KeyValuePair<long, SparseArray>> coreframesrange;
+
+                            //at beginning of clip compute walking average from beginning (or else it would be out of range) but as clip progresses switch to walking average from the middle (which is better)
+                            if (frameoffset > i)
+                                coreframesrange = _framelist.ToList().GetRange(i, coreframeslength); 
+                            else
+                                coreframesrange = _framelist.ToList().GetRange(i - frameoffset, coreframeslength - frameoffset);
+
+
+                            var listofscores = new SortedList<long, double>();
+                            foreach (var kvp in coreframesrange)
+                            {
+                                listofscores.Add(kvp.Key, kvp.Value.Size() != 0 ? GetImageUsability(Utils.GetSparseFace(kvp.Value)) : -1); //return -1 for usabilty if no face exists
+                            }
+
+                            var avg = listofscores.Average(x => x.Value);
+
+                            var sumOfSquaresOfDifferences = listofscores.ToList().Select(val => (val.Value - avg) * (val.Value - avg)).Sum();
+
+                            var stdev = Math.Sqrt(sumOfSquaresOfDifferences / coreframesrange.Count);
+
+                            coreframesavg.Add(currenttimestamp, avg - stdev); //avg - std dev should give those with best avg score and lowest deviation 
+                        }
+                        else //can't use computations past this point so just need timestamps
+                        {
+                            coreframesavg.Add(currenttimestamp, 0); //avg - std dev should give those with best avg score and lowest deviation 
                         }
 
-                        var avg = listofscores.Average(x => x.Value);
-
-                        var sumOfSquaresOfDifferences = listofscores.ToList().Select(val => (val.Value - avg) * (val.Value - avg)).Sum();
-
-                        var stdev = Math.Sqrt(sumOfSquaresOfDifferences / range.Count);
-
-                        coreframesavg.Add(currenttimestamp, avg - stdev); //avg - std dev should give those with best avg score and lowest deviation //todo can make this leaner later
                         //Log.Info(TAG, "moving average index" + i);
                     }
                 }
 
                 var bestframegroupkey = coreframesavg.Aggregate((l, r) => l.Value > r.Value ? l : r).Key; //gets key of max value (avg-stdev) from dictionary
 
-                var frameoffset = coreframeslength / 2; //will get offset to put coreframes in middle of total frames for entire video.
+                Tuple<long, long> bestTSRange;
+                if (frameoffset > coreframesavg.IndexOfKey(bestframegroupkey)) //if best at begging of clip get timestamp at beginning of range to frametotal (to stay in range)
+                {
+                    bestTSRange = new Tuple<long, long>(bestframegroupkey, coreframesavg.Keys[coreframesavg.IndexOfKey(bestframegroupkey) + GetFrameTotal()] ); 
 
-                if (frameoffset > coreframesavg.IndexOfKey(bestframegroupkey)) //fix for when best frame is at beggining of video
-                    frameoffset = 0;
+                }
+                else //if best not at beginning place best timestamp in middle of range (best to match algo above)
+                {
+                    bestTSRange = new Tuple<long, long>(coreframesavg.Keys[coreframesavg.IndexOfKey(bestframegroupkey) - frameoffset], coreframesavg.Keys[coreframesavg.IndexOfKey(bestframegroupkey) + GetFrameTotal() - frameoffset]);
+                }
 
-                var bestlist = coreframesavg.ToList().GetRange(coreframesavg.IndexOfKey(bestframegroupkey) - frameoffset, GetFrameTotal());//.ToDictionary(x => x.Key, y => y.Value); 
+                //var bestlist = coreframesavg.ToList().GetRange(coreframesavg.IndexOfKey(bestframegroupkey) - frameoffset, GetFrameTotal());//.ToDictionary(x => x.Key, y => y.Value); 
+                //var timestamprange = new Tuple<long, long>(bestlist.Select(x => x.Key).First(), bestlist.Select(x => x.Key).Last());
 
-                var timestamprange = new Tuple<long, long>(bestlist.Select(x => x.Key).First(), bestlist.Select(x => x.Key).Last());
-
-                return timestamprange;
+                return bestTSRange;
             }
             catch (Exception e)
             {
@@ -234,7 +260,7 @@ namespace GrowPea.Droid
             {
                 if (face != null && System.Math.Abs(face.EulerY) <= 18) //forward facing
                 {
-                    return ((face.IsSmilingProbability < 0 ? 0 : face.IsSmilingProbability) + //if not smiling make that less important by returing 0 instead of -1
+                    return ((face.IsSmilingProbability < 0 ? 0 : face.IsSmilingProbability) + //if not smiling make that less important by returning 0 instead of -1
                         face.IsRightEyeOpenProbability + face.IsLeftEyeOpenProbability) / 3; 
                 }
                 else //if not forward facing then return 0

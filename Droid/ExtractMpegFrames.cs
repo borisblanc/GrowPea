@@ -386,7 +386,7 @@ namespace GrowPea.Droid
         }
         
         stopWatch.Stop();
-        Log.Info("STOPWATCH!!!!:", stopWatch.ElapsedMilliseconds.ToString());
+        Log.Info("inner STOPWATCH!!!!:", string.Format("numberofframes = {0}, totaltime = {1}", decodeCount, stopWatch.ElapsedMilliseconds));
         detector.Release();
     }
 
