@@ -61,7 +61,7 @@ namespace GrowPea.Droid
 
         private static readonly Java.IO.File _camerafilesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim);
 
-        private static string _inputfilename = "VID_20170713_174052.mp4";//"636354234996333350.mp4";//"VID_20170713_174052.mp4";
+        private static string _inputfilename = "MVI_3057.MOV";//"636354234996333350.mp4";//"VID_20170713_174052.mp4"; "MVI_3056.MOV"
 
 
         protected override void OnCreate(Bundle bundle)

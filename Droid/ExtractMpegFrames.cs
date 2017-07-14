@@ -66,7 +66,7 @@ namespace GrowPea.Droid
     public class ExtractMpegFrames
     {
         private const String TAG = "ExtractMpegFrames";
-        private const bool VERBOSE = false;   // lots of logging
+        private const bool VERBOSE = true;   // lots of logging
 
         // where to find files (note: requires WRITE_EXTERNAL_STORAGE permission)
 
@@ -165,18 +165,16 @@ namespace GrowPea.Droid
      * it by adjusting the GL viewport to get letterboxing or pillarboxing, but generally if
      * you're extracting frames you don't want black bars.
      */
-    public void extractMpegFrames(string filename, int saveWidth, int saveHeight) 
+    public void extractMpegFrames(string INPUT_FILE, int saveWidth, int saveHeight) 
     {
         MediaCodec decoder = null;
         CodecOutputSurface outputSurface = null;
         MediaExtractor extractor = null;
-        INPUT_FILE = filename;
 
         try
         {
-            File inputFile = new File(_filesdir, INPUT_FILE);   // must be an absolute path
-                                                                // The MediaExtractor error messages aren't very useful.  Check to see if the input
-                                                                // file exists so we can throw a better one if it's not there.
+            // must be an absolute path The MediaExtractor error messages aren't very useful.  Check to see if the input file exists so we can throw a better one if it's not there.
+            File inputFile = new File(_filesdir, INPUT_FILE);   
             if (!inputFile.CanRead())
             {
                 throw new FileNotFoundException("Unable to read " + inputFile);
@@ -192,11 +190,10 @@ namespace GrowPea.Droid
             extractor.SelectTrack(trackIndex);
 
             MediaFormat format = extractor.GetTrackFormat(trackIndex);
-            //if (VERBOSE)
-            //{
-            //    Log.d(TAG, "Video size is " + format.getInteger(MediaFormat.KEY_WIDTH) + "x" +
-            //            format.getInteger(MediaFormat.KEY_HEIGHT));
-            //}
+
+            if (VERBOSE)
+                Log.Info(TAG, "Video size is " + format.GetInteger(MediaFormat.KeyWidth) + "x" + format.GetInteger(MediaFormat.KeyHeight));
+
 
             // Could use width/height from the MediaFormat to get full-size frames.
 
@@ -260,7 +257,7 @@ namespace GrowPea.Droid
  */
     private void doExtract(MediaExtractor extractor, int trackIndex, MediaCodec decoder, CodecOutputSurface outputSurface) 
     {
-        //Stopwatch stopWatch = new Stopwatch();
+        Stopwatch stopWatch = new Stopwatch();
         const int TIMEOUT_USEC = 10000;
         ByteBuffer []
         decoderInputBuffers = decoder.GetInputBuffers();
@@ -279,15 +276,15 @@ namespace GrowPea.Droid
         .SetTrackingEnabled(true) //tracking enables false makes it much slow wtf?!?!
         .SetClassificationType(ClassificationType.All)
         .SetProminentFaceOnly(true) // no diff
-        .SetMinFaceSize((float)0.2) //small performance gain when removed
-        //.SetMode(FaceDetectionMode.Fast) // tiny small performance gain 
+        //.SetMinFaceSize((float)0.1) //small performance gain when removed
+        .SetMode(FaceDetectionMode.Fast) // tiny small performance gain 
         .Build();
 
         
 
         while (!outputDone)
         {
-            //stopWatch.Start();
+            stopWatch.Start();
             // Feed more data to the decoder.
             if (!inputDone)
             {
@@ -378,7 +375,8 @@ namespace GrowPea.Droid
                         //Log.Info("innerSTOPWATCH_begin!!!!:", stopWatch.ElapsedMilliseconds.ToString());
                         //can't call face detector this way its too slow or maybe there is a busy loop???
                         //_FaceFetchDataTasks.Add(Task.Run(() => CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount, frameTimestamps[decodeCount])));
-                        CreateFaceframes(detector, outputSurface.GetFramebitmap(), decodeCount, frameTimestamps[decodeCount]);
+                        //if (decodeCount % 2 ==0) //doesn't help that much and messes with rating algo
+                        CreateFaceframes(detector, outputSurface.GetFramebitmap(), frameTimestamps[decodeCount]);
                         //Log.Info("innerSTOPWATCH_end!!!!:", stopWatch.ElapsedMilliseconds.ToString());
 
                         decodeCount++;
@@ -387,17 +385,19 @@ namespace GrowPea.Droid
             }
         }
         
-        //stopWatch.Stop();
-        //Log.Info("STOPWATCH!!!!:", stopWatch.ElapsedMilliseconds.ToString());
+        stopWatch.Stop();
+        Log.Info("STOPWATCH!!!!:", stopWatch.ElapsedMilliseconds.ToString());
         detector.Release();
     }
 
-    private void CreateFaceframes(FaceDetector detector, Bitmap b, int index, long timestamp)
+    private void CreateFaceframes(FaceDetector detector, Bitmap b, long timestamp)
     {
         try
         {
             Frame newframe = new Frame.Builder().SetBitmap(b).Build();
+            //s.Start();
             SparseArray faces = detector.Detect(newframe); //takes longest
+            //s.Stop();
 
             lock (obj)
             {
@@ -413,7 +413,8 @@ namespace GrowPea.Droid
         finally
         {
             b.Recycle();
-            Log.Info("CreateFaceframes!!!", string.Format("Frame number {0} Processed!!!!!!!", index));
+            //if (VERBOSE)
+            //    Log.Info("CreateFaceframes!!!", s.ElapsedMilliseconds.ToString());
         }
     }
 
@@ -750,11 +751,18 @@ namespace GrowPea.Droid
         public Bitmap GetFramebitmap() //try to speed this up later
         {
             mPixelBuf.Rewind();
-            GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf);
+            // s.Start();
+            //this is bottleneck, no real fix https://www.opengl.org/discussion_boards/showthread.php/184733-Performance-issue-in-GLES20-glreadpixels-in-android
+            GLES20.GlReadPixels(0, 0, mWidth, mHeight, GLES20.GlRgba, GLES20.GlUnsignedByte, mPixelBuf); 
+            //s.Stop();
             Bitmap bmp = Bitmap.CreateBitmap(mWidth, mHeight, Bitmap.Config.Argb8888);
+          
             mPixelBuf.Rewind();
+            
             bmp.CopyPixelsFromBuffer(mPixelBuf);
-            //bmp.Compress(Bitmap.CompressFormat.Png, 90, bos);
+
+            //if (VERBOSE)
+            //    Log.Info("BITMAPinnerwatch!!!!:", s.ElapsedMilliseconds.ToString());
 
             return bmp;
             //bmp.Recycle();
