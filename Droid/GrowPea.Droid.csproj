@@ -87,6 +87,10 @@
     <Compile Include="ExtractMpegFrames.cs" />
     <Compile Include="FaceGraphic.cs" />
     <Compile Include="FaceTrackActivity.cs" />
+    <Compile Include="FileListAdapter.cs" />
+    <Compile Include="FileListFragment.cs" />
+    <Compile Include="FileListRowViewHolder.cs" />
+    <Compile Include="FilePickerActivity.cs" />
     <Compile Include="FrameDataProcessor.cs" />
     <Compile Include="VideoActivity.cs" />
     <Compile Include="Helpers.cs" />
@@ -110,6 +114,8 @@
     <AndroidResource Include="Resources\layout\VideoView.axml">
       <SubType>Designer</SubType>
     </AndroidResource>
+    <AndroidResource Include="Resources\layout\file_picker_list_item.axml" />
+    <AndroidResource Include="Resources\layout\File_Main.axml" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\VideoCapture.axml" />
@@ -125,6 +131,12 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\switchcamera_48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\file.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\folder.png" />
   </ItemGroup>
   <Import Project="..\GrowPea\GrowPea.projitems" Label="Shared" Condition="Exists('..\GrowPea\GrowPea.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

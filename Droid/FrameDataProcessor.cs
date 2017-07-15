@@ -89,7 +89,7 @@ namespace GrowPea.Droid
 
         public async Task<Tuple<long, long>> BeginFramesProcess()
         {
-            Task<Tuple<long, long>> t = new Task<Tuple<long, long>>(ProcessAllFramesold);
+            Task<Tuple<long, long>> t = new Task<Tuple<long, long>>(ProcessAllFrames);
             t.Start();
             var result = await t;
             return result;

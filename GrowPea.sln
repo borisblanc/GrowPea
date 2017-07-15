@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "GrowPea", "GrowPea\GrowPea.shproj", "{822C0783-B57D-4349-90CB-48CD840BF6E0}"
 EndProject
@@ -32,6 +32,7 @@ Global
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|Any CPU.Deploy.0 = Release|Any CPU
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|iPhone.ActiveCfg = Release|Any CPU
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|iPhone.Build.0 = Release|Any CPU
 		{A61E13F8-91FD-4C3A-BF9A-4AB6EC3633CC}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
@@ -44,6 +45,7 @@ Global
 		{93A02169-57D4-4331-BC92-C673699D8487}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|Any CPU.ActiveCfg = Release|iPhone
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|Any CPU.Build.0 = Release|iPhone
+		{93A02169-57D4-4331-BC92-C673699D8487}.Release|Any CPU.Deploy.0 = Release|iPhone
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhone.ActiveCfg = Release|iPhone
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhone.Build.0 = Release|iPhone
 		{93A02169-57D4-4331-BC92-C673699D8487}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator

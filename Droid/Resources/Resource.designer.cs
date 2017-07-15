@@ -173,7 +173,13 @@ namespace GrowPea.Droid
 			public const int common_google_signin_btn_text_light_pressed = 2130837525;
 			
 			// aapt resource value: 0x7f020016
-			public const int switchcamera_48 = 2130837526;
+			public const int file = 2130837526;
+			
+			// aapt resource value: 0x7f020017
+			public const int folder = 2130837527;
+			
+			// aapt resource value: 0x7f020018
+			public const int switchcamera_48 = 2130837528;
 			
 			static Drawable()
 			{
@@ -188,8 +194,8 @@ namespace GrowPea.Droid
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f080011
-			public const int VideoView1 = 2131230737;
+			// aapt resource value: 0x7f080016
+			public const int VideoView1 = 2131230742;
 			
 			// aapt resource value: 0x7f080000
 			public const int adjust_height = 2131230720;
@@ -200,26 +206,41 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f080006
 			public const int auto = 2131230726;
 			
-			// aapt resource value: 0x7f08000f
-			public const int btnPlay = 2131230735;
+			// aapt resource value: 0x7f080012
+			public const int btnPlay = 2131230738;
+			
+			// aapt resource value: 0x7f080015
+			public const int btnProcess = 2131230741;
+			
+			// aapt resource value: 0x7f080013
+			public const int btnReAnalyze = 2131230739;
+			
+			// aapt resource value: 0x7f080011
+			public const int btnRecord = 2131230737;
+			
+			// aapt resource value: 0x7f08000c
+			public const int btn_VideoActivity = 2131230732;
+			
+			// aapt resource value: 0x7f080014
+			public const int btnpickfile = 2131230740;
 			
 			// aapt resource value: 0x7f080010
-			public const int btnReAnalyze = 2131230736;
-			
-			// aapt resource value: 0x7f08000e
-			public const int btnRecord = 2131230734;
-			
-			// aapt resource value: 0x7f080009
-			public const int btn_VideoActivity = 2131230729;
-			
-			// aapt resource value: 0x7f08000d
-			public const int btnswCam = 2131230733;
+			public const int btnswCam = 2131230736;
 			
 			// aapt resource value: 0x7f080007
 			public const int dark = 2131230727;
 			
-			// aapt resource value: 0x7f08000c
-			public const int faceOverlay = 2131230732;
+			// aapt resource value: 0x7f08000f
+			public const int faceOverlay = 2131230735;
+			
+			// aapt resource value: 0x7f080009
+			public const int file_list_fragment = 2131230729;
+			
+			// aapt resource value: 0x7f08000a
+			public const int file_picker_image = 2131230730;
+			
+			// aapt resource value: 0x7f08000b
+			public const int file_picker_text = 2131230731;
 			
 			// aapt resource value: 0x7f080003
 			public const int icon_only = 2131230723;
@@ -230,14 +251,14 @@ namespace GrowPea.Droid
 			// aapt resource value: 0x7f080002
 			public const int none = 2131230722;
 			
-			// aapt resource value: 0x7f08000b
-			public const int preview = 2131230731;
+			// aapt resource value: 0x7f08000e
+			public const int preview = 2131230734;
 			
 			// aapt resource value: 0x7f080004
 			public const int standard = 2131230724;
 			
-			// aapt resource value: 0x7f08000a
-			public const int topLayout = 2131230730;
+			// aapt resource value: 0x7f08000d
+			public const int topLayout = 2131230733;
 			
 			// aapt resource value: 0x7f080005
 			public const int wide = 2131230725;
@@ -272,13 +293,19 @@ namespace GrowPea.Droid
 		{
 			
 			// aapt resource value: 0x7f040000
-			public const int MainMenu = 2130968576;
+			public const int File_Main = 2130968576;
 			
 			// aapt resource value: 0x7f040001
-			public const int VideoCapture = 2130968577;
+			public const int file_picker_list_item = 2130968577;
 			
 			// aapt resource value: 0x7f040002
-			public const int VideoView = 2130968578;
+			public const int MainMenu = 2130968578;
+			
+			// aapt resource value: 0x7f040003
+			public const int VideoCapture = 2130968579;
+			
+			// aapt resource value: 0x7f040004
+			public const int VideoView = 2130968580;
 			
 			static Layout()
 			{

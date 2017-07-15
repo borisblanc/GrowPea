@@ -121,7 +121,7 @@ namespace GrowPea.Droid
             {
                 try
                 {
-                    mTest.extractMpegFrames(INPUT_FILE, _width, _height);
+                    mTest.extractMpegFrames(_width, _height);
                 }
                 catch (Throwable th)
                 {
@@ -165,7 +165,7 @@ namespace GrowPea.Droid
      * it by adjusting the GL viewport to get letterboxing or pillarboxing, but generally if
      * you're extracting frames you don't want black bars.
      */
-    public void extractMpegFrames(string INPUT_FILE, int saveWidth, int saveHeight) 
+    public void extractMpegFrames(int saveWidth, int saveHeight) 
     {
         MediaCodec decoder = null;
         CodecOutputSurface outputSurface = null;

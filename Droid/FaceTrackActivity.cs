@@ -14,10 +14,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using Android.Content;
 using Android.Hardware.Camera2;
 using Android.Hardware.Camera2.Params;
 using Android.Views;
+using com.xamarin.recipes.filepicker;
 using Java.IO;
 using Java.Nio;
 using Console = System.Console;
@@ -39,6 +41,8 @@ namespace GrowPea.Droid
         private ImageButton mSwitchcamButton;
         private Button mPlaybutton;
         private Button mReAnalyzebutton;
+        private Button mFilepickbutton;
+        private Button mProcessExistbutton;
 
         private bool isRecording = false;
 
@@ -61,11 +65,15 @@ namespace GrowPea.Droid
 
         private static readonly Java.IO.File _camerafilesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim);
 
-        private static string _inputfilename = "MVI_3057.MOV";//"VID_20170714_133159.mp4" "MVI_3057.MOV"
+        private static string _inputfilename; //= "MVI_3057.MOV";//"VID_20170714_133159.mp4" "MVI_3057.MOV"
+
+        private static string _inputfilenamepath;
 
         private FrameDataProcessor _fdp;
 
+        private int _requestcode = 0;
 
+        private int _resultcode = 0;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -84,6 +92,8 @@ namespace GrowPea.Droid
                 mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
                 mPlaybutton = FindViewById<Button>(Resource.Id.btnPlay);
                 mReAnalyzebutton = FindViewById<Button>(Resource.Id.btnReAnalyze);
+                mFilepickbutton = FindViewById<Button>(Resource.Id.btnpickfile);
+                mProcessExistbutton = FindViewById<Button>(Resource.Id.btnProcess);
 
                 mRecbutton.Click += (sender, e) => ToggleRecording();
                 mSwitchcamButton.Click += (sender, e) => ToggleCamface();
@@ -91,27 +101,37 @@ namespace GrowPea.Droid
                 TogglePlay(_currentfilepath != null);
                 mReAnalyzebutton.Click += (sender, e) => ReTrimVideo();
                 mReAnalyzebutton.Enabled = _fdp != null;
+                mFilepickbutton.Click += (sender, e) => Pickfile();
+                mProcessExistbutton.Click += (sender, e) => startAllProcessing();
+                mProcessExistbutton.Enabled = _inputfilenamepath != null;
+
 
                 _framelist = new SortedList<long, SparseArray>();
                 
-                Stopwatch s = new Stopwatch();
-                s.Start();
-
-                new ExtractMpegFrames(_downloadsfilesdir, _inputfilename, ref _framelist, pFramewidth, pFrameHeight);
-
-                if (_framelist.Count > minframescount)
-                {
-                    StartFrameProcessing(s);
-                }
-                else
-                {
-                    Showpopup("Not enough frames recorded try again!", ToastLength.Short);
-                }
-                          
+        
             }
             catch (Exception e)
             {
 
+            }
+        }
+
+        private void startAllProcessing()
+        {
+            Stopwatch s = new Stopwatch();
+            s.Start();
+
+            var toast = Toast.MakeText(this, "Starting processing please wait.....", ToastLength.Long);
+            toast.Show();
+            new ExtractMpegFrames(_downloadsfilesdir, _inputfilename, ref _framelist, pFramewidth, pFrameHeight);
+
+            if (_framelist.Count > minframescount)
+            {
+                StartFrameProcessing(s);
+            }
+            else
+            {
+                Showpopup("Not enough frames recorded try again!", ToastLength.Short);
             }
         }
 
@@ -177,7 +197,6 @@ namespace GrowPea.Droid
             if (!isRecording)
             {
                 isRecording = true;
-                mGraphicOverlay.isRecording = true;
                 mRecbutton.Text = "STOP";
                 mRecbutton.SetTextColor(Color.Red);
                 mSwitchcamButton.Enabled = false;
@@ -186,14 +205,12 @@ namespace GrowPea.Droid
             else
             {
                 isRecording = false;
-                mGraphicOverlay.isRecording = false;
                 mRecbutton.Text = "RECORD";
                 mRecbutton.SetTextColor(Color.Black);
                 mSwitchcamButton.Enabled = true;
 
             }
         }
-
 
 
         private void ToggleCamface()
@@ -222,6 +239,35 @@ namespace GrowPea.Droid
 
             }
 
+        }
+
+        private void Pickfile()
+        {
+            try
+            {
+                var intent = new Intent(this, typeof(FilePickerActivity));
+                intent.PutExtra("defaultFilePath", _downloadsfilesdir.AbsolutePath);
+                StartActivityForResult(intent, _requestcode);
+            }
+            catch (Exception e)
+            {
+                var x = e;
+            }
+        }
+
+        protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, Result.Ok, data);
+            if (requestCode == _requestcode)
+            {
+                if (resultCode == Result.Ok)
+                {
+                    _inputfilename = data.GetStringExtra("DATA").Split('/').Last();
+                    mProcessExistbutton.Enabled = true;
+                    mPlaybutton.Enabled = true;
+                    
+                }
+            }
         }
 
         private async void ReTrimVideo()
