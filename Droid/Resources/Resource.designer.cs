@@ -188,8 +188,8 @@ namespace GrowPea.Droid
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f080010
-			public const int VideoView1 = 2131230736;
+			// aapt resource value: 0x7f080011
+			public const int VideoView1 = 2131230737;
 			
 			// aapt resource value: 0x7f080000
 			public const int adjust_height = 2131230720;
@@ -202,6 +202,9 @@ namespace GrowPea.Droid
 			
 			// aapt resource value: 0x7f08000f
 			public const int btnPlay = 2131230735;
+			
+			// aapt resource value: 0x7f080010
+			public const int btnReAnalyze = 2131230736;
 			
 			// aapt resource value: 0x7f08000e
 			public const int btnRecord = 2131230734;

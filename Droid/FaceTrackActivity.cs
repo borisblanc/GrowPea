@@ -38,7 +38,7 @@ namespace GrowPea.Droid
         private Button mRecbutton;
         private ImageButton mSwitchcamButton;
         private Button mPlaybutton;
-
+        private Button mReAnalyzebutton;
 
         private bool isRecording = false;
 
@@ -61,7 +61,10 @@ namespace GrowPea.Droid
 
         private static readonly Java.IO.File _camerafilesdir = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim);
 
-        private static string _inputfilename = "MVI_3057.MOV";//"636354234996333350.mp4";//"VID_20170714_133159.mp4"; "MVI_3057.MOV"
+        private static string _inputfilename = "MVI_3057.MOV";//"VID_20170714_133159.mp4" "MVI_3057.MOV"
+
+        private FrameDataProcessor _fdp;
+
 
 
         protected override void OnCreate(Bundle bundle)
@@ -80,14 +83,17 @@ namespace GrowPea.Droid
                 mRecbutton = FindViewById<Button>(Resource.Id.btnRecord);
                 mSwitchcamButton = FindViewById<ImageButton>(Resource.Id.btnswCam);
                 mPlaybutton = FindViewById<Button>(Resource.Id.btnPlay);
+                mReAnalyzebutton = FindViewById<Button>(Resource.Id.btnReAnalyze);
 
                 mRecbutton.Click += (sender, e) => ToggleRecording();
                 mSwitchcamButton.Click += (sender, e) => ToggleCamface();
                 mPlaybutton.Click += (sender, e) => OpenVideo();
-                mPlaybutton.Enabled = _currentfilepath != null;
-
+                TogglePlay(_currentfilepath != null);
+                mReAnalyzebutton.Click += (sender, e) => ReTrimVideo();
+                mReAnalyzebutton.Enabled = _fdp != null;
 
                 _framelist = new SortedList<long, SparseArray>();
+                
                 Stopwatch s = new Stopwatch();
                 s.Start();
 
@@ -109,6 +115,13 @@ namespace GrowPea.Droid
             }
         }
 
+        protected override void OnRestart()
+        {
+            base.OnRestart();
+            ToggleReAnalyze(_fdp != null);
+            ToggleRecord(true);
+        }
+
 
         private void Performanceresults(Stopwatch s)
         {
@@ -121,11 +134,10 @@ namespace GrowPea.Droid
             try
             {
                 Showpopup("Processing Smiles :)!", ToastLength.Short);
+                _fdp = new FrameDataProcessor(ref _framelist, _createfps, vidlengthseconds);
+                var _besttimestamprange = await _fdp.BeginFramesProcess(); //get best frames collection: todo change to best frames indexes instead
 
-                var fdp = new FrameDataProcessor(ref _framelist, _createfps, vidlengthseconds);
-                var besttimestamprange = await fdp.BeginFramesProcess(); //get best frames collection: todo change to best frames indexes instead
-
-                if (besttimestamprange == null)
+                if (_besttimestamprange == null)
                 {
                     Showpopup("Error with Smiles processing :(!", ToastLength.Short);
                 }
@@ -133,23 +145,20 @@ namespace GrowPea.Droid
                 {
                     Showpopup("Smiles processed :)!", ToastLength.Short);
 
-                    Java.IO.File inputFile = new Java.IO.File(_downloadsfilesdir, _inputfilename);
-                    var outputfilename = string.Format("{0}.mp4", DateTime.Now.Ticks);
-                    Java.IO.File outputFile = new Java.IO.File(_downloadsfilesdir, outputfilename);
+                    var result = await CreateTrimVideo(_besttimestamprange);
 
-                    var result = VideoUtils.startTrim(inputFile, outputFile, besttimestamprange.Item1, besttimestamprange.Item2);
-
-                    if (File.Exists(outputFile.AbsolutePath))
+                    if (result)
                     {
                         Showpopup("Video Created, Press Play!!!", ToastLength.Short);
-                        _currentfilepath = outputFile.AbsolutePath;
                         TogglePlay(true);
+                        ToggleRecord(false);
                     }
                     else
                     {
                         Showpopup("Error with video(!", ToastLength.Short);
                         _currentfilepath = null;
                         TogglePlay(false);
+                        ToggleRecord(true);
                     }
                     Performanceresults(s);
                 }
@@ -215,21 +224,76 @@ namespace GrowPea.Droid
 
         }
 
+        private async void ReTrimVideo()
+        {
+            TogglePlay(false);
+            if (_fdp != null)
+            {
+                Showpopup("Reprocessing Video", ToastLength.Short);
+                var result = await _fdp.ReProcessAllFrames();
+                if (result)
+                {
+                    var result2 = await CreateTrimVideo(_fdp.bestTSRange);
+
+                    if (result2)
+                    {
+                        Showpopup("Done Reprocessing Video", ToastLength.Short);
+                        TogglePlay(true);
+                        ToggleReAnalyze(false);
+                        ToggleRecord(false);
+                    }
+                    else
+                        Showpopup("Error..Can't reprocess video", ToastLength.Short);
 
 
+                }
+                else
+                    Showpopup("Error..Can't reprocess video", ToastLength.Short);
+            }
+            else
+            {
+                Showpopup("Error..Can't reprocess video", ToastLength.Short);
+            }
+        }
 
+        private Task<bool> CreateTrimVideo(Tuple<long, long> _bestts)
+        {
+            Java.IO.File inputFile = new Java.IO.File(_downloadsfilesdir, _inputfilename);
+            var outputfilename = string.Format("{0}.mp4", DateTime.Now.Ticks);
+            Java.IO.File outputFile = new Java.IO.File(_downloadsfilesdir, outputfilename);
+            _currentfilepath = outputFile.Path;
+            var result = VideoUtils.startTrim(inputFile, outputFile, _bestts.Item1, _bestts.Item2);
+
+            return Task.FromResult(result);
+        }
+
+        private void ToggleRecord(bool toggle)
+        {
+            RunOnUiThread(() =>
+            {
+                mRecbutton.Enabled = toggle;
+            });
+        }
 
         private void TogglePlay(bool toggle)
         {
-            this.RunOnUiThread(() =>
+            RunOnUiThread(() =>
             {
                 mPlaybutton.Enabled = toggle;
             });
         }
 
+        private void ToggleReAnalyze(bool toggle)
+        {
+            RunOnUiThread(() =>
+            {
+                mReAnalyzebutton.Enabled = toggle;
+            });
+        }
+
         private void Showpopup(string msg, ToastLength length)
         {
-            this.RunOnUiThread(() =>
+            RunOnUiThread(() =>
             {
                 var toast = Toast.MakeText(this, msg, length);
                 toast.Show();

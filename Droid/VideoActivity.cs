@@ -301,7 +301,7 @@ namespace GrowPea.Droid
 
                 if (_allFrameData != null && _allFrameData.Count >= framemin)
                 {
-                    var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
+                    //var fdp = new FrameDataProcessor(ref _allFrameData, pFramewidth, pFrameHeight, _createfps, vidlengthseconds);
                     //var images = await fdp.BeginProcessingFrames(); //do best frames video
                     List<byte[]> images = _allFrameData.Select(f => f.Value._yuv).ToList(); //do all video
 
@@ -313,20 +313,20 @@ namespace GrowPea.Droid
                     else
                     {
                         Showpopup("Smiles processed :)!", ToastLength.Short);
-                        var fileresult = await fdp.BeginMakeBufferVideo(images);
+                        //var fileresult = await fdp.BeginMakeBufferVideo(images);
 
-                        if (File.Exists(fileresult))
-                        {
-                            Showpopup("Video Created, Press Play!!!", ToastLength.Short);
-                            _currentfilepath = fileresult;
-                            TogglePlay(true);
-                        }
-                        else
-                        {
-                            Showpopup("Error with video(!", ToastLength.Short);
-                            _currentfilepath = null;
-                            TogglePlay(false);
-                        }
+                        //if (File.Exists(fileresult))
+                        //{
+                        //    Showpopup("Video Created, Press Play!!!", ToastLength.Short);
+                        //    _currentfilepath = fileresult;
+                        //    TogglePlay(true);
+                        //}
+                        //else
+                        //{
+                        //    Showpopup("Error with video(!", ToastLength.Short);
+                        //    _currentfilepath = null;
+                        //    TogglePlay(false);
+                        //}
                     }
                 }
                 else
