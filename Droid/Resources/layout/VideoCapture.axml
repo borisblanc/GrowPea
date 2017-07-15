@@ -9,7 +9,7 @@
         android:id="@+id/preview"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight=".85">
+        android:layout_weight=".80">
         <GrowPea.Droid.GraphicOverlay
             android:id="@+id/faceOverlay"
             android:layout_width="fill_parent"
@@ -18,27 +18,37 @@
     <LinearLayout
         android:layout_height="0dp"
         android:layout_width="fill_parent"
-        android:layout_weight=".15"
+        android:layout_weight=".20"
         android:gravity="center">
         <ImageButton
-            android:layout_width="125dp"
+            android:layout_width="100dp"
             android:layout_height="fill_parent"
             android:id="@+id/btnswCam"
             android:src="@drawable/switchcamera_48" />
         <Button
             android:text="RECORD"
-            android:layout_width="125dp"
+            android:layout_width="100dp"
             android:layout_height="fill_parent"
             android:id="@+id/btnRecord" />
         <Button
             android:text="Play"
-            android:layout_width="125dp"
+            android:layout_width="100dp"
             android:layout_height="fill_parent"
             android:id="@+id/btnPlay" />
         <Button
             android:text="ReAnalyze"
-            android:layout_width="125dp"
+            android:layout_width="100dp"
             android:layout_height="fill_parent"
             android:id="@+id/btnReAnalyze" />
+        <Button
+            android:text="PickFile"
+            android:layout_width="100dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/btnpickfile" />
+        <Button
+            android:text="Process Existing"
+            android:layout_width="100dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/btnProcess" />
     </LinearLayout>
 </LinearLayout>
