@@ -18,8 +18,6 @@ namespace GrowPea
         private static readonly System.Object obj = new Object();
 
 
-
-
         private static void ExportBitmapAsPNG(Bitmap bitmap, float score)
         {
             var sdCardPath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath;
@@ -38,7 +36,7 @@ namespace GrowPea
             {
                 using (var baos = new MemoryStream())
                 {
-                    yuvimage.CompressToJpeg(new Android.Graphics.Rect(0, 0, width, height), 100, baos); // Where 100 is the quality of the generated jpeg
+                    yuvimage.CompressToJpeg(new Rect(0, 0, width, height), 100, baos); // Where 100 is the quality of the generated jpeg
                     byte[] jpegArray = baos.ToArray();
                     //var bitmapoptions = new BitmapFactory.Options { InSampleSize = 2 };
                     b = BitmapFactory.DecodeByteArray(jpegArray, 0, jpegArray.Length); //, bitmapoptions);
@@ -51,6 +49,14 @@ namespace GrowPea
             }
 
             return b;
+        }
+
+        public static YuvImage GetYUVImage(ByteBuffer framebuff, ImageFormatType _CameraColorFormat, int _Width, int _Height)
+        {
+            byte[] barray = new byte[framebuff.Remaining()];
+            framebuff.Get(barray);
+
+            return new YuvImage(barray, _CameraColorFormat, _Width, _Height, null);
         }
 
 
@@ -103,6 +109,84 @@ namespace GrowPea
                 Log.Error("utils", "GetSparseFace borked somehow", e);
             }
             return face;
+        }
+
+        public static ByteBuffer deepCopy(ByteBuffer orig)
+        {
+            int pos = orig.Position(), lim = orig.Limit();
+            try
+            {
+                orig.Position(0).Limit(orig.Capacity()); // set range to entire buffer
+                ByteBuffer toReturn = deepCopyVisible(orig); // deep copy range
+                toReturn.Position(pos).Limit(lim); // set range to original
+                return toReturn;
+            }
+            finally // do in finally in case something goes wrong we don't bork the orig
+            {
+                orig.Position(pos).Limit(lim); // restore original
+            }
+        }
+
+        public static ByteBuffer deepCopyVisible(ByteBuffer orig)
+        {
+            int pos = orig.Position();
+            try
+            {
+                ByteBuffer toReturn;
+                // try to maintain implementation to keep performance
+                if (orig.IsDirect)
+                    toReturn = ByteBuffer.AllocateDirect(orig.Remaining());
+                else
+                    toReturn = ByteBuffer.Allocate(orig.Remaining());
+
+                toReturn.Put(orig);
+                toReturn.Order(orig.Order());
+
+                return (ByteBuffer)toReturn.Position(0);
+            }
+            finally
+            {
+                orig.Position(pos);
+            }
+        }
+
+
+        //used for all possible cases of color correction accounting for discrepencies between android camera saved images and codec color formats
+        //navigate to http://bigflake.com/mediacodec/ & see question 5 at the bottom
+
+
+
+        public static void swapNV21_NV12(ref byte[] yuv, int _Width, int _Height)
+        {
+            int length = 0;
+            if (yuv.Length % 2 == 0)
+                length = yuv.Length;
+            else
+                length = yuv.Length - 1; //for uneven we need to shorten loop because it will go out of bounds because of i1 += 2
+
+            for (int i1 = 0; i1 < length; i1 += 2)
+            {
+                if (i1 >= _Width * _Height)
+                {
+                    byte tmp = yuv[i1];
+                    yuv[i1] = yuv[i1 + 1];
+                    yuv[i1 + 1] = tmp;
+                }
+            }
+        }
+
+
+
+        public static byte[] swapYV12toI420(byte[] yv12bytes, int _Width, int _Height)
+        {
+            byte[] i420bytes = new byte[yv12bytes.Length];
+            for (int i = 0; i < _Width * _Height; i++)
+                i420bytes[i] = yv12bytes[i];
+            for (int i = _Width * _Height; i < _Width * _Height + (_Width / 2 * _Height / 2); i++)
+                i420bytes[i] = yv12bytes[i + (_Width / 2 * _Height / 2)];
+            for (int i = _Width * _Height + (_Width / 2 * _Height / 2); i < _Width * _Height + 2 * (_Width / 2 * _Height / 2); i++)
+                i420bytes[i] = yv12bytes[i - (_Width / 2 * _Height / 2)];
+            return i420bytes;
         }
 
 

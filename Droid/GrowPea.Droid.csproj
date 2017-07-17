@@ -92,6 +92,7 @@
     <Compile Include="FileListRowViewHolder.cs" />
     <Compile Include="FilePickerActivity.cs" />
     <Compile Include="FrameDataProcessor.cs" />
+    <Compile Include="FramesExtract.cs" />
     <Compile Include="VideoActivity.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="MainMenuActivity.cs" />

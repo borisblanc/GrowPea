@@ -11,6 +11,7 @@ using Android.Gms.Common;
 using Android.Content.PM;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace GrowPea.Droid
 
         private CameraFacing camface = CameraFacing.Front; //default may change
 
-        private string _currentfilepath;
+        private string _outputfilepath;
 
         public SortedList<long, SparseArray> _framelist;
 
@@ -67,7 +68,6 @@ namespace GrowPea.Droid
 
         private static string _inputfilename; //= "MVI_3057.MOV";//"VID_20170714_133159.mp4" "MVI_3057.MOV"
 
-        private static string _inputfilenamepath;
 
         private FrameDataProcessor _fdp;
 
@@ -98,12 +98,12 @@ namespace GrowPea.Droid
                 mRecbutton.Click += (sender, e) => ToggleRecording();
                 mSwitchcamButton.Click += (sender, e) => ToggleCamface();
                 mPlaybutton.Click += (sender, e) => OpenVideo();
-                TogglePlay(_currentfilepath != null);
+                TogglePlay(_outputfilepath != null);
                 mReAnalyzebutton.Click += (sender, e) => ReTrimVideo();
                 mReAnalyzebutton.Enabled = _fdp != null;
                 mFilepickbutton.Click += (sender, e) => Pickfile();
-                mProcessExistbutton.Click += (sender, e) => startAllProcessing();
-                mProcessExistbutton.Enabled = _inputfilenamepath != null;
+                mProcessExistbutton.Click += (sender, e) => StartAllProcessing();
+                mProcessExistbutton.Enabled = _inputfilename != null;
 
 
                 
@@ -115,7 +115,7 @@ namespace GrowPea.Droid
             }
         }
 
-        private void startAllProcessing()
+        private void StartAllProcessing()
         {
             Stopwatch s = new Stopwatch();
             s.Start();
@@ -133,6 +133,39 @@ namespace GrowPea.Droid
             {
                 Showpopup("Not enough frames recorded try again!", ToastLength.Short);
             }
+        }
+        private void StartProcessing() //even slower than startAllProcessing that uses surface
+        {
+            _framelist = new SortedList<long, SparseArray>();
+
+            var toast = Toast.MakeText(this, "Starting processing please wait.....", ToastLength.Long);
+            toast.Show();
+
+            Java.IO.File file = new Java.IO.File(_downloadsfilesdir, _inputfilename);
+
+
+            var decoder = new FramesExtract();
+
+            Task.Run(() => decoder.PrepareEncoder(file.AbsolutePath, _downloadsfilesdir));
+            //decoder.PrepareEncoder(file.AbsolutePath);
+            //decoder.Decode();
+
+            //var encodedimagedata = FramesExtract.GetFrames(this, file.AbsolutePath);
+
+            //foreach (var data in encodedimagedata)
+            //{
+            //    Bitmap bmp = Bitmap.CreateBitmap(640, 360, Bitmap.Config.Argb8888);
+
+            //    bmp.CopyPixelsFromBuffer(data.Value);
+
+            //    var createfilepath = new Java.IO.File(_downloadsfilesdir, DateTime.Now.Ticks + ".bmp").AbsolutePath;
+            //    using (FileStream bos = new FileStream(createfilepath, FileMode.CreateNew))
+            //    {
+            //        bmp.Compress(Bitmap.CompressFormat.Png, 90, bos);
+            //    }
+            //    bmp.Recycle();
+            //}
+
         }
 
         protected override void OnRestart()
@@ -176,7 +209,7 @@ namespace GrowPea.Droid
                     else
                     {
                         Showpopup("Error with video(!", ToastLength.Short);
-                        _currentfilepath = null;
+                        _outputfilepath = null;
                         TogglePlay(false);
                         ToggleRecord(true);
                     }
@@ -223,10 +256,10 @@ namespace GrowPea.Droid
         {
             try
             {
-                if (_currentfilepath != null && File.Exists(_currentfilepath))
+                if (_outputfilepath != null && File.Exists(_outputfilepath))
                 {
                     var intent = new Intent(this, typeof(VideoViewer));
-                    intent.PutExtra("FilePath", _currentfilepath);
+                    intent.PutExtra("FilePath", _outputfilepath);
                     StartActivity(intent);
                 }
                 else
@@ -307,7 +340,7 @@ namespace GrowPea.Droid
             Java.IO.File inputFile = new Java.IO.File(_downloadsfilesdir, _inputfilename);
             var outputfilename = string.Format("{0}.mp4", DateTime.Now.Ticks);
             Java.IO.File outputFile = new Java.IO.File(_downloadsfilesdir, outputfilename);
-            _currentfilepath = outputFile.Path;
+            _outputfilepath = outputFile.Path;
             var result = VideoUtils.startTrim(inputFile, outputFile, _bestts.Item1, _bestts.Item2);
 
             return Task.FromResult(result);

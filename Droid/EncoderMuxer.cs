@@ -292,7 +292,7 @@ namespace GrowPea.Droid
                                 encodeYUV420SP(yuv, argb, b.Width, b.Height);
                                 var yuvimage = new YuvImage(yuv, _CameraColorFormat, _Width, _Height, null);
                                 var yuvarray = yuvimage.GetYuvData();
-                                colorcorrection(ref yuvarray); //method for fixing common color matching issues see below for comments
+                                colorcorrection(ref yuvarray, b.Width, b.Height); //method for fixing common color matching issues see below for comments
 
                                 inputBuf.Put(yuvarray);
 
@@ -406,7 +406,7 @@ namespace GrowPea.Droid
     //used for all possible cases of color correction accounting for discrepencies between android camera saved images and codec color formats
     //navigate to http://bigflake.com/mediacodec/ & see question 5 at the bottom
 
-    private void colorcorrection(ref byte[] yuv)
+    private static void colorcorrection(ref byte[] yuv, int width, int height)
     {
         string codecformat;
 
@@ -428,7 +428,7 @@ namespace GrowPea.Droid
 
         if (codecformat == "NV12" &&  _CameraColorFormat == ImageFormatType.Nv21) //works as tested on pixel
         {
-            swapNV21_NV12(ref yuv);
+            Utils.swapNV21_NV12(ref yuv, width, height);
         }
         else if (codecformat == "I420" && _CameraColorFormat == ImageFormatType.Nv21) //not tested on device that has this config so not sure if it works
         {
@@ -437,7 +437,7 @@ namespace GrowPea.Droid
         }
         else if (codecformat == "I420" && _CameraColorFormat == ImageFormatType.Yv12) //not tested on device that has this config so not sure if it works
         {
-            yuv = swapYV12toI420(yuv);
+            yuv = Utils.swapYV12toI420(yuv, width, height);
         }
         else if (codecformat == "NV12" && _CameraColorFormat == ImageFormatType.Yv12) //not tested on device that has this config so not sure if it works
         {
@@ -449,48 +449,11 @@ namespace GrowPea.Droid
 
 
 
-    private YuvImage GetYUVImage(ByteBuffer framebuff)
-    {
-        byte[] barray = new byte[framebuff.Remaining()];
-        framebuff.Get(barray);
-
-        return new YuvImage(barray, _CameraColorFormat, _Width, _Height, null);
-    }
 
 
 
-    public void swapNV21_NV12(ref byte[] yuv)
-    {
-        int length = 0;
-        if (yuv.Length % 2 == 0)
-            length = yuv.Length;
-        else
-            length = yuv.Length - 1; //for uneven we need to shorten loop because it will go out of bounds because of i1 += 2
-
-        for (int i1 = 0; i1 < length; i1 += 2)
-        {
-            if (i1 >= _Width * _Height)
-            {
-                byte tmp = yuv[i1];
-                yuv[i1] = yuv[i1 + 1];
-                yuv[i1 + 1] = tmp;
-            }
-        }
-    }
 
 
-
-    public byte[] swapYV12toI420(byte[] yv12bytes)
-    {
-        byte[] i420bytes = new byte[yv12bytes.Length];
-        for (int i = 0; i < _Width * _Height; i++)
-            i420bytes[i] = yv12bytes[i];
-        for (int i = _Width * _Height; i < _Width * _Height + (_Width / 2 * _Height / 2); i++)
-            i420bytes[i] = yv12bytes[i + (_Width / 2 * _Height / 2)];
-        for (int i = _Width * _Height + (_Width / 2 * _Height / 2); i < _Width * _Height + 2 * (_Width / 2 * _Height / 2); i++)
-            i420bytes[i] = yv12bytes[i - (_Width / 2 * _Height / 2)];
-        return i420bytes;
-    }
 
         private void encodeYUV420SP(byte[] yuv420sp, int[] argb, int width, int height)
         {
