@@ -259,8 +259,7 @@ namespace GrowPea.Droid
     {
         Stopwatch stopWatch = new Stopwatch();
         const int TIMEOUT_USEC = 10000;
-        ByteBuffer []
-        decoderInputBuffers = decoder.GetInputBuffers();
+        ByteBuffer [] decoderInputBuffers = decoder.GetInputBuffers();
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
         int inputChunk = 0;
         int decodeCount = 0;

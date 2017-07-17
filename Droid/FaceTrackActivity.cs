@@ -106,7 +106,6 @@ namespace GrowPea.Droid
                 mProcessExistbutton.Enabled = _inputfilenamepath != null;
 
 
-                _framelist = new SortedList<long, SparseArray>();
                 
         
             }
@@ -120,6 +119,7 @@ namespace GrowPea.Droid
         {
             Stopwatch s = new Stopwatch();
             s.Start();
+            _framelist = new SortedList<long, SparseArray>();
 
             var toast = Toast.MakeText(this, "Starting processing please wait.....", ToastLength.Long);
             toast.Show();
