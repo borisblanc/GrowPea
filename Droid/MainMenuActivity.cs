@@ -4,8 +4,8 @@ using Android.Content;
 using Android.OS;
 using Android.Widget;
 using Android.Content.PM;
-using Mindscape.Raygun4Net;
-using Mindscape.Raygun4Net.Messages;
+//using Mindscape.Raygun4Net;
+//using Mindscape.Raygun4Net.Messages;
 
 
 namespace GrowPea.Droid
@@ -18,13 +18,13 @@ namespace GrowPea.Droid
             try
             {
                 base.OnCreate(savedInstanceState);
-                RaygunClient.Initialize("3amrQKpbXz5tMRZ1yoGgQw==").AttachCrashReporting().AttachPulse(this);
+                //RaygunClient.Initialize("3amrQKpbXz5tMRZ1yoGgQw==").AttachCrashReporting().AttachPulse(this);
 
-                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage("borisblanc@gmail.com")
-                {
-                    FirstName = "Boris",
-                    FullName = "BR",
-                };
+                //RaygunClient.Current.UserInfo = new RaygunIdentifierMessage("borisblanc@gmail.com")
+                //{
+                //    FirstName = "Boris",
+                //    FullName = "BR",
+                //};
 
                 SetContentView(Resource.Layout.MainMenu);
                 // Create your application here
